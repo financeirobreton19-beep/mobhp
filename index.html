@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <!-- Firebase (compat) -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -498,12 +498,32 @@
             padding: 0 6px;
             font-size: 0.6rem;
             display: inline-block;
-            margin: 1px 0;
+            margin: 1px 2px;
             cursor: pointer;
             transition: 0.1s;
+            position: relative;
         }
         .calendar-grid .day-cell .delivery-badge:hover {
             background: #055a8c;
+        }
+        .calendar-grid .day-cell .delivery-badge .badge-delete {
+            display: none;
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #e74c3c;
+            color: #fff;
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            font-size: 8px;
+            line-height: 14px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid #fff;
+        }
+        .calendar-grid .day-cell .delivery-badge:hover .badge-delete {
+            display: block;
         }
         .calendar-grid .day-cell.drag-over {
             border-color: #026aa7;
@@ -750,6 +770,14 @@
         .modal-actions .btn-submit:hover {
             background: #055a8c;
         }
+        .modal-actions .btn-delete {
+            background: #e74c3c;
+            color: #fff;
+            margin-right: auto;
+        }
+        .modal-actions .btn-delete:hover {
+            background: #c0392b;
+        }
         .modal-box .coord-info {
             background: #f4f5f7;
             padding: 6px 10px;
@@ -841,7 +869,7 @@
             font-size: 0.7rem;
             padding: 2px 10px;
             border-radius: 12px;
-            background: rgba(255,255,255,0.15);
+            background: rgba(255, 255, 255, 0.15);
             color: #fff;
             display: inline-block;
         }
@@ -951,7 +979,7 @@
                 <button id="calNext">▶</button>
             </div>
             <div class="calendar-grid" id="calendarGrid"></div>
-            <div style="margin-top:8px;font-size:0.8rem;color:#5e6c84;">Clique em uma entrega para editar. Arraste do Kanban para agendar.</div>
+            <div style="margin-top:8px;font-size:0.8rem;color:#5e6c84;">Clique em uma entrega para editar. Passe o mouse sobre a etiqueta para excluir (ícone X).</div>
         </div>
     </div>
 
@@ -1077,6 +1105,7 @@
                 </select>
                 <div id="coordInfo" class="coord-info" style="display:none;">📍 Coordenadas: <span id="coordDisplay"></span></div>
                 <div class="modal-actions">
+                    <button type="button" class="btn-delete" id="btnDeleteModal" style="display:none;">🗑️ Excluir</button>
                     <button type="button" class="btn-cancel" id="btnCancelModal">Cancelar</button>
                     <button type="submit" class="btn-submit">Salvar</button>
                 </div>
@@ -1109,12 +1138,10 @@
 
     <!-- ============================================================ -->
     <!-- SCRIPTS -->
-    <!-- Leaflet -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Firebase (inicializado abaixo) -->
     <script>
         // ================================================================
-        //  CONFIGURAÇÃO DO FIREBASE
+        //  FIREBASE
         // ================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyCN8rdDUulnbm13ctudGgglPVm4yOKRbVc",
@@ -1130,7 +1157,6 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Status da conexão
         const statusEl = document.getElementById('firebaseStatus');
 
         function setStatus(text, className) {
@@ -1143,13 +1169,11 @@
             .then(() => {
                 setStatus('✅ Online', 'online');
                 console.log('Autenticado com sucesso');
-                // Iniciar escuta em tempo real
                 iniciarSnapshot();
             })
             .catch(error => {
                 console.error('Erro na autenticação:', error);
                 setStatus('⚠️ Offline', 'offline');
-                // Tentar carregar dados do localStorage como fallback
                 carregarDadosFallback();
             });
 
@@ -1157,7 +1181,6 @@
         //  VARIÁVEIS GLOBAIS
         // ================================================================
         let deliveries = [];
-        let nextId = 1;
         let originCoords = null;
         let originAddress = '';
         let originSelectActive = false;
@@ -1184,14 +1207,13 @@
         };
 
         // ================================================================
-        //  FALLBACK LOCALSTORAGE (caso Firebase offline)
+        //  FALLBACK LOCALSTORAGE
         // ================================================================
         function carregarDadosFallback() {
             const data = localStorage.getItem('deliveries');
             if (data) {
                 try {
                     deliveries = JSON.parse(data);
-                    nextId = parseInt(localStorage.getItem('nextId')) || 1;
                 } catch (e) { deliveries = []; }
             }
             if (!deliveries || deliveries.length === 0) {
@@ -1208,13 +1230,14 @@
         }
 
         function criarDadosIniciais() {
+            const hoje = new Date().toISOString().split('T')[0];
             deliveries = [{
-                id: '1',
+                id: 'demo1',
                 orderNumber: '561',
                 client: 'Maria Oliveira',
                 phone: '(91) 99999-1111',
                 responsible: 'Carlos',
-                deliveryDate: new Date().toISOString().split('T')[0],
+                deliveryDate: hoje,
                 items: 'Sofá cinza 3 lugares\nPoltrona Mustafa',
                 address: 'Av. Paulista, 1578, São Paulo - SP',
                 lat: -23.5615,
@@ -1227,12 +1250,12 @@
                 distance: null,
                 duration: null
             }, {
-                id: '2',
+                id: 'demo2',
                 orderNumber: '562',
                 client: 'João Pereira',
                 phone: '(91) 99999-2222',
                 responsible: 'Ana',
-                deliveryDate: new Date().toISOString().split('T')[0],
+                deliveryDate: hoje,
                 items: 'Mesa de madeira\n6 cadeiras',
                 address: 'Rua Augusta, 500, São Paulo - SP',
                 lat: -23.5532,
@@ -1245,12 +1268,12 @@
                 distance: null,
                 duration: null
             }, {
-                id: '3',
+                id: 'demo3',
                 orderNumber: '563',
                 client: 'Carla Souza',
                 phone: '(91) 99999-3333',
                 responsible: 'Carlos',
-                deliveryDate: new Date().toISOString().split('T')[0],
+                deliveryDate: hoje,
                 items: 'Cama box\nColchão ortopédico',
                 address: 'Alameda Santos, 1000, São Paulo - SP',
                 lat: -23.5596,
@@ -1263,12 +1286,12 @@
                 distance: null,
                 duration: null
             }, {
-                id: '4',
+                id: 'demo4',
                 orderNumber: '564',
                 client: 'Roberto Lima',
                 phone: '(91) 99999-4444',
                 responsible: 'Fernanda',
-                deliveryDate: new Date().toISOString().split('T')[0],
+                deliveryDate: hoje,
                 items: 'Estante branca\n6 prateleiras',
                 address: 'Rua Oscar Freire, 200, São Paulo - SP',
                 lat: -23.5585,
@@ -1281,13 +1304,11 @@
                 distance: null,
                 duration: null
             }];
-            nextId = 5;
             localStorage.setItem('deliveries', JSON.stringify(deliveries));
-            localStorage.setItem('nextId', String(nextId));
         }
 
         // ================================================================
-        //  FIRESTORE - SNAPSHOT EM TEMPO REAL
+        //  FIRESTORE - SNAPSHOT
         // ================================================================
         function iniciarSnapshot() {
             if (isSnapshotActive) return;
@@ -1297,25 +1318,18 @@
                 .onSnapshot((snapshot) => {
                     deliveries = [];
                     snapshot.forEach(doc => {
-                        const data = doc.data();
                         deliveries.push({
                             id: doc.id,
-                            ...data
+                            ...doc.data()
                         });
                     });
-                    // Calcular próximo ID (se necessário)
-                    if (deliveries.length) {
-                        const ids = deliveries.map(d => parseInt(d.orderNumber) || 0);
-                        const maxId = Math.max(...ids);
-                        nextId = maxId + 1;
-                    } else {
-                        // Se não houver dados, criar iniciais
+                    // Se não houver dados, criar iniciais e salvar no Firestore
+                    if (deliveries.length === 0) {
                         criarDadosIniciais();
-                        // Salvar no Firestore
                         salvarTodosNoFirestore();
                         return;
                     }
-                    // Carregar origem do Firestore (em um documento separado)
+                    // Carregar origem
                     db.collection('config').doc('origin').get()
                         .then(doc => {
                             if (doc.exists) {
@@ -1326,7 +1340,6 @@
                             iniciarSistema();
                         })
                         .catch(() => {
-                            // Fallback localStorage para origem
                             const origin = localStorage.getItem('originCoords');
                             if (origin) {
                                 try {
@@ -1343,11 +1356,10 @@
                 });
         }
 
-        // Salvar todos os dados iniciais no Firestore (usado apenas na primeira carga)
         function salvarTodosNoFirestore() {
             const batch = db.batch();
             deliveries.forEach(d => {
-                const ref = db.collection('entregas').doc(d.id);
+                const ref = db.collection('entregas').doc();
                 batch.set(ref, d);
             });
             batch.commit().then(() => {
@@ -1356,15 +1368,12 @@
         }
 
         // ================================================================
-        //  FUNÇÕES CRUD (Firestore)
+        //  CRUD (CORRIGIDO)
         // ================================================================
-        async function addDelivery(delivery) {
+        async function addDelivery(data) {
             const docRef = db.collection('entregas').doc();
-            const newId = docRef.id;
-            const newDelivery = { ...delivery, id: newId };
-            await docRef.set(newDelivery);
-            // Atualiza a lista local (será atualizada pelo snapshot)
-            return newDelivery;
+            await docRef.set(data);
+            return docRef.id;
         }
 
         async function updateDelivery(id, data) {
@@ -1376,10 +1385,7 @@
         }
 
         async function saveOriginToFirestore(coords, address) {
-            await db.collection('config').doc('origin').set({
-                coords: coords,
-                address: address
-            });
+            await db.collection('config').doc('origin').set({ coords, address });
         }
 
         // ================================================================
@@ -1487,9 +1493,7 @@
             originCoords = { lat, lng };
             originAddress = label || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
             criarMarcadorOrigem(lat, lng);
-            // Salvar no Firestore
             saveOriginToFirestore(originCoords, originAddress).catch(() => {
-                // Fallback localStorage
                 localStorage.setItem('originCoords', JSON.stringify(originCoords));
                 localStorage.setItem('originAddress', originAddress);
             });
@@ -1583,7 +1587,6 @@
                 if (result) {
                     d.distance = result.distance;
                     d.duration = result.duration;
-                    // Atualizar no Firestore
                     try {
                         await updateDelivery(d.id, { distance: result.distance, duration: result.duration });
                     } catch (e) { /* fallback silencioso */ }
@@ -1593,7 +1596,7 @@
         }
 
         // ================================================================
-        //  ROTA OTIMIZADA (corrigida)
+        //  ROTA OTIMIZADA
         // ================================================================
         function haversineDistance(lat1, lon1, lat2, lon2) {
             const R = 6371;
@@ -1797,7 +1800,6 @@
                     }
                     try {
                         await updateDelivery(id, { status: newStatus });
-                        // A atualização virá via snapshot
                     } catch (error) {
                         alert('Erro ao mover entrega: ' + error.message);
                     }
@@ -1832,7 +1834,6 @@
                 return;
             }
             if (delivery.status === action) return;
-            // Mudar status via Firestore
             updateDelivery(id, { status: action })
                 .catch(err => alert('Erro ao atualizar status: ' + err.message));
         }
@@ -1875,8 +1876,6 @@
                     confirmDate: confirmDate
                 });
                 document.getElementById('confirmModal').classList.remove('active');
-                // O snapshot atualizará a UI
-                // Gerar termo após confirmação
                 setTimeout(() => {
                     const updated = deliveries.find(d => d.id === id);
                     if (updated) gerarTermo(updated);
@@ -1967,7 +1966,7 @@
         }
 
         // ================================================================
-        //  CALENDÁRIO
+        //  CALENDÁRIO (com exclusão)
         // ================================================================
         let currentYear = 2026,
             currentMonth = 8;
@@ -2017,11 +2016,31 @@
                     badge.textContent = `#${d.orderNumber} ${d.client}`;
                     badge.draggable = true;
                     badge.dataset.id = d.id;
-                    badge.addEventListener('click', (e) => {
+
+                    // Botão excluir dentro do badge
+                    const deleteBtn = document.createElement('span');
+                    deleteBtn.className = 'badge-delete';
+                    deleteBtn.textContent = '✕';
+                    deleteBtn.title = 'Excluir esta entrega';
+                    deleteBtn.addEventListener('click', async (e) => {
                         e.stopPropagation();
+                        if (confirm(`Excluir entrega #${d.orderNumber} - ${d.client}?`)) {
+                            try {
+                                await deleteDelivery(d.id);
+                            } catch (error) {
+                                alert('Erro ao excluir: ' + error.message);
+                            }
+                        }
+                    });
+                    badge.appendChild(deleteBtn);
+
+                    // Clique para editar
+                    badge.addEventListener('click', (e) => {
+                        if (e.target.closest('.badge-delete')) return;
                         const delivery = deliveries.find(del => del.id === badge.dataset.id);
                         if (delivery) openModalEdit(delivery);
                     });
+
                     badge.addEventListener('dragstart', (e) => {
                         e.dataTransfer.setData('text/plain', d.id);
                     });
@@ -2251,7 +2270,7 @@
         });
 
         // ================================================================
-        //  MODAL NOVA/EDIÇÃO
+        //  MODAL NOVA/EDIÇÃO (COM EXCLUIR)
         // ================================================================
         let manualCoords = null;
         let editingId = null;
@@ -2260,6 +2279,7 @@
             editingId = null;
             document.getElementById('editId').value = '';
             document.getElementById('modalTitle').textContent = '📦 Nova Entrega';
+            document.getElementById('btnDeleteModal').style.display = 'none';
             manualCoords = { lat, lng };
             document.getElementById('coordInfo').style.display = 'block';
             document.getElementById('coordDisplay').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
@@ -2277,6 +2297,7 @@
             editingId = delivery.id;
             document.getElementById('editId').value = delivery.id;
             document.getElementById('modalTitle').textContent = '✏️ Editar Entrega';
+            document.getElementById('btnDeleteModal').style.display = 'inline-block';
             document.getElementById('orderNumber').value = delivery.orderNumber || '';
             document.getElementById('client').value = delivery.client || '';
             document.getElementById('phone').value = delivery.phone || '';
@@ -2296,6 +2317,7 @@
             editingId = null;
             document.getElementById('editId').value = '';
             document.getElementById('modalTitle').textContent = '📦 Nova Entrega';
+            document.getElementById('btnDeleteModal').style.display = 'none';
             manualCoords = null;
             document.getElementById('coordInfo').style.display = 'none';
             document.getElementById('modalOverlay').classList.add('active');
@@ -2308,6 +2330,22 @@
         });
         document.getElementById('modalOverlay').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) document.getElementById('modalOverlay').classList.remove('active');
+        });
+
+        // Botão Excluir no modal
+        document.getElementById('btnDeleteModal').addEventListener('click', async () => {
+            const id = document.getElementById('editId').value;
+            if (!id) return;
+            const delivery = deliveries.find(d => d.id === id);
+            if (!delivery) return;
+            if (confirm(`Excluir entrega #${delivery.orderNumber} - ${delivery.client}?`)) {
+                try {
+                    await deleteDelivery(id);
+                    document.getElementById('modalOverlay').classList.remove('active');
+                } catch (error) {
+                    alert('Erro ao excluir: ' + error.message);
+                }
+            }
         });
 
         document.getElementById('formDelivery').addEventListener('submit', async (e) => {
@@ -2354,7 +2392,6 @@
 
             try {
                 if (editId) {
-                    // Editar
                     await updateDelivery(editId, {
                         orderNumber,
                         client,
@@ -2369,7 +2406,6 @@
                         status
                     });
                 } else {
-                    // Nova
                     const newDelivery = {
                         orderNumber,
                         client,
@@ -2395,7 +2431,6 @@
                 manualCoords = null;
                 editingId = null;
                 document.getElementById('coordInfo').style.display = 'none';
-                // O snapshot atualizará a UI
             } catch (error) {
                 alert('Erro ao salvar: ' + error.message);
             }
@@ -2453,7 +2488,7 @@
         });
 
         // ================================================================
-        //  RENDER ALL (chamado pelo snapshot)
+        //  RENDER ALL
         // ================================================================
         function renderAll() {
             renderKanban();
@@ -2474,12 +2509,11 @@
         }
 
         // ================================================================
-        //  INICIALIZAÇÃO DO SISTEMA
+        //  INICIALIZAÇÃO
         // ================================================================
         function iniciarSistema() {
             initMap();
             renderKanban();
-            // Carregar origem do localStorage se não veio do Firestore
             if (!originCoords) {
                 const origin = localStorage.getItem('originCoords');
                 if (origin) {
@@ -2492,7 +2526,6 @@
                     } catch (e) {}
                 }
             }
-            // Atualizar dashboard e relatório se estiverem abertos
             setTimeout(() => {
                 if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
                 if (document.getElementById('tab-report').classList.contains('active')) renderReport();
@@ -2543,7 +2576,7 @@
         document.getElementById('btnOptimizeRoute').addEventListener('click', optimizeRoute);
 
         // ================================================================
-        //  PWA (Service Worker)
+        //  PWA
         // ================================================================
         if ('serviceWorker' in navigator) {
             const swCode = `
@@ -2562,7 +2595,6 @@
             }).catch(() => {});
         }
 
-        // Manifest
         const manifest = {
             name: 'Mobiliário Hong Possas',
             short_name: 'Entregas',
@@ -2583,10 +2615,7 @@
         link.href = manifestUrl;
         document.head.appendChild(link);
 
-        // ================================================================
-        //  FIM - O SISTEMA INICIA AUTOMATICAMENTE COM O SNAPSHOT
-        // ================================================================
-        console.log('✅ Sistema com Firebase iniciado. Aguardando autenticação...');
+        console.log('✅ Sistema com Firebase - IDs corrigidos e exclusão no calendário.');
     </script>
 </body>
 </html>
