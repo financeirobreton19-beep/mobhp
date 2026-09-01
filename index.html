@@ -4,157 +4,910 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Mobiliário Hong Possas - Entregas</title>
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <style>
-        /* (MANTENHA O MESMO CSS QUE VOCÊ JÁ TEM) */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
-        body { background: #f0f2f5; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        header { background: #6b1a2a; color: #fff; padding: 8px 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 10; gap: 8px; }
-        header .brand { font-weight: 600; font-size: 1.2rem; letter-spacing: 0.5px; }
-        header .brand small { font-weight: 300; font-size: 0.7rem; opacity: 0.8; margin-left: 6px; }
-        header .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-        header .toolbar button { padding: 5px 12px; border-radius: 4px; border: none; font-size: 0.8rem; cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.15); color: #fff; }
-        header .toolbar button:hover { background: rgba(255,255,255,0.3); }
-        header .toolbar button.active-tab { background: #fff; color: #6b1a2a; font-weight: 600; }
-        .tab-content { display: none; flex: 1; overflow: hidden; padding: 10px; gap: 10px; }
-        .tab-content.active { display: flex; }
-        .tab-content.kanban-tab { flex-direction: row; }
-        .tab-content.map-tab { flex-direction: column; }
-        .tab-content.calendar-tab { flex-direction: column; }
-        .tab-content.dashboard-tab { flex-direction: column; overflow-y: auto; }
-        .tab-content.report-tab { flex-direction: column; overflow-y: auto; }
-        
+        /* ===== RESET E BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: #6b1a2a;
+            color: #fff;
+            padding: 8px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            gap: 8px;
+        }
+        header .brand {
+            font-weight: 600;
+            font-size: 1.2rem;
+            letter-spacing: 0.5px;
+        }
+        header .brand small {
+            font-weight: 300;
+            font-size: 0.7rem;
+            opacity: 0.8;
+            margin-left: 6px;
+        }
+        header .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+        header .toolbar button {
+            padding: 5px 12px;
+            border-radius: 4px;
+            border: none;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+        header .toolbar button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        header .toolbar button.active-tab {
+            background: #fff;
+            color: #6b1a2a;
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow: hidden;
+            padding: 10px;
+            gap: 10px;
+        }
+        .tab-content.active {
+            display: flex;
+        }
+        .tab-content.kanban-tab {
+            flex-direction: row;
+        }
+        .tab-content.map-tab {
+            flex-direction: column;
+        }
+        .tab-content.calendar-tab {
+            flex-direction: column;
+        }
+        .tab-content.dashboard-tab {
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .tab-content.report-tab {
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
         /* ===== KANBAN ===== */
-        .trello-columns { display: flex; gap: 12px; flex: 1 1 40%; min-width: 280px; overflow-x: auto; padding-bottom: 8px; }
-        .column { background: #ebecf0; border-radius: 8px; padding: 10px 12px; width: 230px; flex-shrink: 0; display: flex; flex-direction: column; max-height: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .column h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #172b4d; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #d0d4da; display: flex; justify-content: space-between; align-items: center; }
-        .column h3 span { background: #d0d4da; padding: 0 8px; border-radius: 12px; font-size: 0.75rem; color: #172b4d; }
-        .card-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px 0; min-height: 60px; }
-        .card-item { background: #fff; border-radius: 6px; padding: 10px 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); cursor: grab; transition: 0.15s; border-left: 4px solid #026aa7; font-size: 0.85rem; user-select: none; position: relative; }
-        .card-item:active { cursor: grabbing; }
-        .card-item.dragging { opacity: 0.5; transform: scale(0.95); }
-        .card-item .card-order { font-weight: 700; color: #6b1a2a; font-size: 0.8rem; }
-        .card-item .card-title { font-weight: 600; color: #172b4d; margin-bottom: 2px; }
-        .card-item .card-client { font-size: 0.75rem; color: #2c3e50; font-weight: 500; }
-        .card-item .card-phone { font-size: 0.7rem; color: #27ae60; font-weight: 600; }
-        .card-item .card-address { font-size: 0.7rem; color: #5e6c84; display: flex; align-items: center; gap: 4px; }
-        .card-item .card-meta { display: flex; flex-wrap: wrap; justify-content: space-between; font-size: 0.7rem; color: #5e6c84; margin-top: 4px; gap: 4px; }
-        .card-item .card-distance { font-size: 0.7rem; color: #27ae60; font-weight: 600; }
-        .card-item .delivery-type-badge { display: inline-block; background: #6b1a2a; color: #fff; border-radius: 12px; padding: 0 8px; font-size: 0.6rem; font-weight: 700; margin-left: 4px; }
-        .card-actions { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
-        .card-actions .row { display: flex; flex-wrap: wrap; gap: 4px; }
-        .card-actions button { background: #f4f5f7; border: 1px solid #d0d4da; border-radius: 4px; padding: 2px 10px; font-size: 0.7rem; cursor: pointer; color: #172b4d; transition: 0.15s; }
-        .card-actions button:hover { background: #e1e4e8; }
-        .card-actions button.primary { background: #026aa7; color: #fff; border-color: #026aa7; }
-        .card-actions button.danger { background: #eb5a46; color: #fff; border-color: #eb5a46; }
-        .card-actions button.warning { background: #f39c12; color: #fff; border-color: #f39c12; }
-        .card-actions button.success { background: #2ecc71; color: #fff; border-color: #2ecc71; }
-        .card-actions button.termo-btn { background: #8e44ad; color: #fff; border-color: #8e44ad; }
-        .card-actions button.whatsapp { background: #25d366; color: #fff; border-color: #25d366; }
-        
+        .trello-columns {
+            display: flex;
+            gap: 12px;
+            flex: 1 1 40%;
+            min-width: 280px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        .column {
+            background: #ebecf0;
+            border-radius: 8px;
+            padding: 10px 12px;
+            width: 230px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            max-height: 100%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .column h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #172b4d;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #d0d4da;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .column h3 span {
+            background: #d0d4da;
+            padding: 0 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: #172b4d;
+        }
+        .card-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 2px 0;
+            min-height: 60px;
+        }
+        .card-item {
+            background: #fff;
+            border-radius: 6px;
+            padding: 10px 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            cursor: grab;
+            transition: 0.15s;
+            border-left: 4px solid #026aa7;
+            font-size: 0.85rem;
+            user-select: none;
+            position: relative;
+        }
+        .card-item:active {
+            cursor: grabbing;
+        }
+        .card-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+        .card-item .card-order {
+            font-weight: 700;
+            color: #6b1a2a;
+            font-size: 0.8rem;
+        }
+        .card-item .card-title {
+            font-weight: 600;
+            color: #172b4d;
+            margin-bottom: 2px;
+        }
+        .card-item .card-client {
+            font-size: 0.75rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        .card-item .card-phone {
+            font-size: 0.7rem;
+            color: #27ae60;
+            font-weight: 600;
+        }
+        .card-item .card-address {
+            font-size: 0.7rem;
+            color: #5e6c84;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .card-item .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: #5e6c84;
+            margin-top: 4px;
+            gap: 4px;
+        }
+        .card-item .card-distance {
+            font-size: 0.7rem;
+            color: #27ae60;
+            font-weight: 600;
+        }
+        .card-item .delivery-type-badge {
+            display: inline-block;
+            background: #6b1a2a;
+            color: #fff;
+            border-radius: 12px;
+            padding: 0 8px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+        .card-actions {
+            margin-top: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .card-actions .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .card-actions button {
+            background: #f4f5f7;
+            border: 1px solid #d0d4da;
+            border-radius: 4px;
+            padding: 2px 10px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            color: #172b4d;
+            transition: 0.15s;
+        }
+        .card-actions button:hover {
+            background: #e1e4e8;
+        }
+        .card-actions button.primary {
+            background: #026aa7;
+            color: #fff;
+            border-color: #026aa7;
+        }
+        .card-actions button.danger {
+            background: #eb5a46;
+            color: #fff;
+            border-color: #eb5a46;
+        }
+        .card-actions button.warning {
+            background: #f39c12;
+            color: #fff;
+            border-color: #f39c12;
+        }
+        .card-actions button.success {
+            background: #2ecc71;
+            color: #fff;
+            border-color: #2ecc71;
+        }
+        .card-actions button.termo-btn {
+            background: #8e44ad;
+            color: #fff;
+            border-color: #8e44ad;
+        }
+        .card-actions button.whatsapp {
+            background: #25d366;
+            color: #fff;
+            border-color: #25d366;
+        }
+
         /* ===== MAPA ===== */
-        .map-wrapper { flex: 1; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background: #e9edf2; position: relative; min-height: 400px; }
-        #map { width: 100%; height: 100%; cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="36" viewBox="0 0 24 36"><path fill="%23026aa7" d="M12 0C5.373 0 0 5.373 0 12c0 6.627 12 24 12 24s12-17.373 12-24c0-6.627-5.373-12-12-12zm0 16c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4z"/><circle cx="12" cy="12" r="4" fill="%23fff"/></svg>') 12 30, auto; }
-        .map-search { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1000; background: #fff; padding: 4px 10px; border-radius: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 4px; width: 80%; max-width: 380px; }
-        .map-search input { flex: 1; border: none; padding: 4px 6px; outline: none; font-size: 0.85rem; border-radius: 20px; }
-        .map-search button { background: #026aa7; color: #fff; border: none; border-radius: 20px; padding: 3px 14px; cursor: pointer; font-weight: 600; font-size: 0.75rem; }
-        .map-route-btn { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; background: #6b1a2a; color: #fff; border: none; border-radius: 30px; padding: 8px 20px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-size: 0.9rem; }
-        .map-route-btn:hover { background: #8a2235; }
-        .origin-control { position: absolute; top: 70px; right: 10px; z-index: 1000; background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); width: 220px; font-size: 0.8rem; }
-        .origin-control label { font-weight: 600; display: block; margin-bottom: 4px; }
-        .origin-control input { width: 100%; padding: 4px 6px; border: 1px solid #d0d4da; border-radius: 4px; font-size: 0.8rem; }
-        .origin-control .btn-group { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
-        .origin-control .btn-group button { flex: 1; padding: 3px 6px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: 600; }
-        .origin-control .btn-group .btn-definir { background: #026aa7; color: #fff; }
-        .origin-control .btn-group .btn-definir:hover { background: #055a8c; }
-        .origin-control .btn-group .btn-mapa { background: #6b1a2a; color: #fff; }
-        .origin-control .btn-group .btn-mapa:hover { background: #8a2235; }
-        .origin-control .btn-group .btn-mapa.active { background: #e67e22; box-shadow: 0 0 0 2px #f39c12; }
-        .origin-control .origin-status { font-size: 0.7rem; color: #5e6c84; margin-top: 4px; word-break: break-word; }
-        .route-info { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.95); padding: 8px 16px; border-radius: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-size: 0.8rem; display: none; z-index: 1000; font-weight: 500; white-space: nowrap; }
-        .route-info.show { display: block; }
-        
+        .map-wrapper {
+            flex: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: #e9edf2;
+            position: relative;
+            min-height: 400px;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="36" viewBox="0 0 24 36"><path fill="%23026aa7" d="M12 0C5.373 0 0 5.373 0 12c0 6.627 12 24 12 24s12-17.373 12-24c0-6.627-5.373-12-12-12zm0 16c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4z"/><circle cx="12" cy="12" r="4" fill="%23fff"/></svg>') 12 30, auto;
+        }
+        .map-search {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: #fff;
+            padding: 4px 10px;
+            border-radius: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            width: 80%;
+            max-width: 380px;
+        }
+        .map-search input {
+            flex: 1;
+            border: none;
+            padding: 4px 6px;
+            outline: none;
+            font-size: 0.85rem;
+            border-radius: 20px;
+        }
+        .map-search button {
+            background: #026aa7;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            padding: 3px 14px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        .map-route-btn {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: #6b1a2a;
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            padding: 8px 20px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            font-size: 0.9rem;
+        }
+        .map-route-btn:hover {
+            background: #8a2235;
+        }
+        .origin-control {
+            position: absolute;
+            top: 70px;
+            right: 10px;
+            z-index: 1000;
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            width: 220px;
+            font-size: 0.8rem;
+        }
+        .origin-control label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .origin-control input {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #d0d4da;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .origin-control .btn-group {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+        .origin-control .btn-group button {
+            flex: 1;
+            padding: 3px 6px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .origin-control .btn-group .btn-definir {
+            background: #026aa7;
+            color: #fff;
+        }
+        .origin-control .btn-group .btn-definir:hover {
+            background: #055a8c;
+        }
+        .origin-control .btn-group .btn-mapa {
+            background: #6b1a2a;
+            color: #fff;
+        }
+        .origin-control .btn-group .btn-mapa:hover {
+            background: #8a2235;
+        }
+        .origin-control .btn-group .btn-mapa.active {
+            background: #e67e22;
+            box-shadow: 0 0 0 2px #f39c12;
+        }
+        .origin-control .origin-status {
+            font-size: 0.7rem;
+            color: #5e6c84;
+            margin-top: 4px;
+            word-break: break-word;
+        }
+        .route-info {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 16px;
+            border-radius: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            font-size: 0.8rem;
+            display: none;
+            z-index: 1000;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .route-info.show {
+            display: block;
+        }
+
         /* ===== CALENDÁRIO ===== */
-        .calendar-container { flex: 1; display: flex; flex-direction: column; background: #fff; border-radius: 10px; padding: 16px; overflow: hidden; }
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .calendar-header h2 { font-size: 1.2rem; color: #172b4d; }
-        .calendar-header button { background: #ebecf0; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; flex: 1; }
-        .calendar-grid .day-name { text-align: center; font-weight: 600; font-size: 0.8rem; color: #5e6c84; padding: 4px 0; }
-        .calendar-grid .day-cell { background: #f8f9fa; border-radius: 6px; min-height: 60px; padding: 4px; cursor: pointer; transition: 0.1s; border: 1px solid transparent; overflow-y: auto; font-size: 0.7rem; }
-        .calendar-grid .day-cell:hover { background: #e9ecef; }
-        .calendar-grid .day-cell.other-month { opacity: 0.4; }
-        .calendar-grid .day-cell .day-number { font-weight: 600; color: #172b4d; margin-bottom: 2px; }
-        .calendar-grid .day-cell .delivery-badge { background: #026aa7; color: #fff; border-radius: 12px; padding: 0 6px; font-size: 0.6rem; display: inline-block; margin: 1px 2px; cursor: pointer; transition: 0.1s; position: relative; }
-        .calendar-grid .day-cell .delivery-badge:hover { background: #055a8c; }
-        .calendar-grid .day-cell .delivery-badge .badge-delete { display: none; position: absolute; top: -6px; right: -6px; background: #e74c3c; color: #fff; border-radius: 50%; width: 14px; height: 14px; font-size: 8px; line-height: 14px; text-align: center; cursor: pointer; border: 1px solid #fff; }
-        .calendar-grid .day-cell .delivery-badge:hover .badge-delete { display: block; }
-        .calendar-grid .day-cell.drag-over { border-color: #026aa7; background: #e3f0fa; }
-        
+        .calendar-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px;
+            overflow: hidden;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .calendar-header h2 {
+            font-size: 1.2rem;
+            color: #172b4d;
+        }
+        .calendar-header button {
+            background: #ebecf0;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            flex: 1;
+        }
+        .calendar-grid .day-name {
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #5e6c84;
+            padding: 4px 0;
+        }
+        .calendar-grid .day-cell {
+            background: #f8f9fa;
+            border-radius: 6px;
+            min-height: 60px;
+            padding: 4px;
+            cursor: pointer;
+            transition: 0.1s;
+            border: 1px solid transparent;
+            overflow-y: auto;
+            font-size: 0.7rem;
+        }
+        .calendar-grid .day-cell:hover {
+            background: #e9ecef;
+        }
+        .calendar-grid .day-cell.other-month {
+            opacity: 0.4;
+        }
+        .calendar-grid .day-cell .day-number {
+            font-weight: 600;
+            color: #172b4d;
+            margin-bottom: 2px;
+        }
+        .calendar-grid .day-cell .delivery-badge {
+            background: #026aa7;
+            color: #fff;
+            border-radius: 12px;
+            padding: 0 6px;
+            font-size: 0.6rem;
+            display: inline-block;
+            margin: 1px 2px;
+            cursor: pointer;
+            transition: 0.1s;
+            position: relative;
+        }
+        .calendar-grid .day-cell .delivery-badge:hover {
+            background: #055a8c;
+        }
+        .calendar-grid .day-cell .delivery-badge .badge-delete {
+            display: none;
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #e74c3c;
+            color: #fff;
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            font-size: 8px;
+            line-height: 14px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid #fff;
+        }
+        .calendar-grid .day-cell .delivery-badge:hover .badge-delete {
+            display: block;
+        }
+        .calendar-grid .day-cell.drag-over {
+            border-color: #026aa7;
+            background: #e3f0fa;
+        }
+
         /* ===== DASHBOARD ===== */
-        .dashboard-container { flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 10px; overflow-y: auto; }
-        .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
-        .dash-card { background: #fff; border-radius: 10px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; }
-        .dash-card .number { font-size: 1.8rem; font-weight: 700; color: #172b4d; }
-        .dash-card .label { font-size: 0.75rem; color: #5e6c84; text-transform: uppercase; letter-spacing: 0.3px; }
-        .dash-card.danger .number { color: #e74c3c; }
-        .dash-card.success .number { color: #2ecc71; }
-        .dash-card.warning .number { color: #f39c12; }
-        .dash-card.info .number { color: #3498db; }
-        .dashboard-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .dashboard-charts .chart-box { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .dashboard-charts .chart-box h3 { font-size: 0.9rem; color: #172b4d; margin-bottom: 8px; }
-        .dashboard-charts .chart-box canvas { max-height: 200px; width: 100% !important; }
-        @media (max-width: 900px) { .dashboard-charts { grid-template-columns: 1fr; } }
-        
+        .dashboard-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        .dash-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 14px 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            text-align: center;
+        }
+        .dash-card .number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #172b4d;
+        }
+        .dash-card .label {
+            font-size: 0.75rem;
+            color: #5e6c84;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .dash-card.danger .number {
+            color: #e74c3c;
+        }
+        .dash-card.success .number {
+            color: #2ecc71;
+        }
+        .dash-card.warning .number {
+            color: #f39c12;
+        }
+        .dash-card.info .number {
+            color: #3498db;
+        }
+        .dashboard-charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .dashboard-charts .chart-box {
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .dashboard-charts .chart-box h3 {
+            font-size: 0.9rem;
+            color: #172b4d;
+            margin-bottom: 8px;
+        }
+        .dashboard-charts .chart-box canvas {
+            max-height: 200px;
+            width: 100% !important;
+        }
+        @media (max-width: 900px) {
+            .dashboard-charts {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* ===== RELATÓRIO ===== */
-        .report-container { flex: 1; background: #fff; border-radius: 10px; padding: 20px; overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .report-filters { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; align-items: flex-end; }
-        .report-filters .filter-group { display: flex; flex-direction: column; gap: 2px; }
-        .report-filters .filter-group label { font-size: 0.7rem; font-weight: 600; color: #172b4d; }
-        .report-filters .filter-group input, .report-filters .filter-group select { padding: 4px 8px; border: 1px solid #d0d4da; border-radius: 4px; font-size: 0.8rem; background: #fff; }
-        .report-filters .filter-group button { padding: 4px 14px; border: none; border-radius: 4px; background: #026aa7; color: #fff; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
-        .report-actions { display: flex; gap: 8px; margin-bottom: 12px; }
-        .report-actions button { padding: 6px 16px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; background: #026aa7; color: #fff; font-size: 0.8rem; }
-        .report-actions button:hover { background: #055a8c; }
-        #reportTableWrapper { overflow-x: auto; }
-        #reportTable { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        #reportTable th { background: #6b1a2a; color: #fff; padding: 6px 8px; text-align: left; position: sticky; top: 0; white-space: nowrap; }
-        #reportTable td { padding: 4px 8px; border-bottom: 1px solid #eee; white-space: nowrap; }
-        #reportTable tr:hover { background: #f8f9fa; }
-        
+        .report-container {
+            flex: 1;
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .report-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+            align-items: flex-end;
+        }
+        .report-filters .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .report-filters .filter-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #172b4d;
+        }
+        .report-filters .filter-group input,
+        .report-filters .filter-group select {
+            padding: 4px 8px;
+            border: 1px solid #d0d4da;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            background: #fff;
+        }
+        .report-filters .filter-group button {
+            padding: 4px 14px;
+            border: none;
+            border-radius: 4px;
+            background: #026aa7;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .report-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .report-actions button {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #026aa7;
+            color: #fff;
+            font-size: 0.8rem;
+        }
+        .report-actions button:hover {
+            background: #055a8c;
+        }
+        #reportTableWrapper {
+            overflow-x: auto;
+        }
+        #reportTable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        #reportTable th {
+            background: #6b1a2a;
+            color: #fff;
+            padding: 6px 8px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+        }
+        #reportTable td {
+            padding: 4px 8px;
+            border-bottom: 1px solid #eee;
+            white-space: nowrap;
+        }
+        #reportTable tr:hover {
+            background: #f8f9fa;
+        }
+
         /* ===== MODAL ===== */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 999; }
-        .modal-overlay.active { display: flex; }
-        .modal-box { background: #fff; border-radius: 12px; padding: 24px 30px; max-width: 520px; width: 92%; max-height: 90vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
-        .modal-box h2 { margin-bottom: 14px; color: #172b4d; font-weight: 500; }
-        .modal-box label { display: block; font-size: 0.85rem; font-weight: 600; margin: 8px 0 4px; color: #172b4d; }
-        .modal-box input, .modal-box textarea, .modal-box select { width: 100%; padding: 6px 10px; border: 1px solid #d0d4da; border-radius: 6px; font-size: 0.9rem; outline: none; transition: border 0.2s; }
-        .modal-box input:focus, .modal-box textarea:focus, .modal-box select:focus { border-color: #026aa7; }
-        .modal-box textarea { resize: vertical; min-height: 50px; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
-        .modal-actions button { padding: 6px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
-        .modal-actions .btn-cancel { background: #ebecf0; color: #172b4d; }
-        .modal-actions .btn-submit { background: #026aa7; color: #fff; }
-        .modal-actions .btn-submit:hover { background: #055a8c; }
-        .modal-actions .btn-delete { background: #e74c3c; color: #fff; margin-right: auto; }
-        .modal-actions .btn-delete:hover { background: #c0392b; }
-        .modal-box .coord-info { background: #f4f5f7; padding: 6px 10px; border-radius: 4px; font-size: 0.8rem; color: #2c3e50; margin: 4px 0 8px; }
-        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px 30px;
+            max-width: 520px;
+            width: 92%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+        .modal-box h2 {
+            margin-bottom: 14px;
+            color: #172b4d;
+            font-weight: 500;
+        }
+        .modal-box label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 8px 0 4px;
+            color: #172b4d;
+        }
+        .modal-box input,
+        .modal-box textarea,
+        .modal-box select {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #d0d4da;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .modal-box input:focus,
+        .modal-box textarea:focus,
+        .modal-box select:focus {
+            border-color: #026aa7;
+        }
+        .modal-box textarea {
+            resize: vertical;
+            min-height: 50px;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .modal-actions button {
+            padding: 6px 16px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .modal-actions .btn-cancel {
+            background: #ebecf0;
+            color: #172b4d;
+        }
+        .modal-actions .btn-submit {
+            background: #026aa7;
+            color: #fff;
+        }
+        .modal-actions .btn-submit:hover {
+            background: #055a8c;
+        }
+        .modal-actions .btn-delete {
+            background: #e74c3c;
+            color: #fff;
+            margin-right: auto;
+        }
+        .modal-actions .btn-delete:hover {
+            background: #c0392b;
+        }
+        .modal-box .coord-info {
+            background: #f4f5f7;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: #2c3e50;
+            margin: 4px 0 8px;
+        }
+
         /* ===== TERMO DE IMPRESSÃO ===== */
-        .termo-print { display: none; }
-        @media print { body * { visibility: hidden; } .termo-print, .termo-print * { visibility: visible; } .termo-print { display: block !important; position: absolute; left: 0; top: 0; width: 100%; padding: 40px 50px; font-family: 'Calibri', 'Segoe UI', sans-serif !important; font-size: 11pt; line-height: 1.5; background: #fff; color: #000; } .termo-print .header { text-align: center; font-size: 14pt; font-weight: 700; color: #6b1a2a; border-bottom: 2px solid #6b1a2a; padding-bottom: 8px; margin-bottom: 20px; } .termo-print .content h2 { text-align: center; font-size: 12.5pt; font-weight: 700; margin: 10px 0 16px; } .termo-print .footer { margin-top: 40px; text-align: center; font-size: 10pt; border-top: 1px solid #ccc; padding-top: 10px; color: #555; } .termo-print .content p, .termo-print .content li { font-size: 11pt; line-height: 1.5; margin: 4px 0; } .termo-print .content .items-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11pt; } .termo-print .content .items-table th, .termo-print .content .items-table td { border: 1px solid #000; padding: 4px 8px; text-align: left; } .termo-print .signature { margin-top: 50px; text-align: center; } .termo-print .signature .line { border-top: 1px solid #000; width: 60%; margin: 30px auto 6px; } }
-        
-        #firebaseStatus { font-size: 0.7rem; padding: 2px 10px; border-radius: 12px; background: rgba(255,255,255,0.15); color: #fff; display: inline-block; }
-        #firebaseStatus.loading { background: #f39c12; }
-        #firebaseStatus.online { background: #2ecc71; }
-        #firebaseStatus.offline { background: #e74c3c; }
-        
-        @media (max-width: 900px) { .tab-content.kanban-tab { flex-direction: column; } .trello-columns { flex: 1 1 auto; min-width: unset; } .map-wrapper { min-height: 300px; } .origin-control { width: 180px; top: 60px; right: 5px; padding: 8px; } .dashboard-cards { grid-template-columns: repeat(2, 1fr); } .report-filters { flex-direction: column; align-items: stretch; } }
+        .termo-print {
+            display: none;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .termo-print,
+            .termo-print * {
+                visibility: visible;
+            }
+            .termo-print {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 40px 50px;
+                font-family: 'Calibri', 'Segoe UI', sans-serif !important;
+                font-size: 11pt;
+                line-height: 1.5;
+                background: #fff;
+                color: #000;
+            }
+            .termo-print .header {
+                text-align: center;
+                font-size: 14pt;
+                font-weight: 700;
+                color: #6b1a2a;
+                border-bottom: 2px solid #6b1a2a;
+                padding-bottom: 8px;
+                margin-bottom: 20px;
+            }
+            .termo-print .content h2 {
+                text-align: center;
+                font-size: 12.5pt;
+                font-weight: 700;
+                margin: 10px 0 16px;
+            }
+            .termo-print .footer {
+                margin-top: 40px;
+                text-align: center;
+                font-size: 10pt;
+                border-top: 1px solid #ccc;
+                padding-top: 10px;
+                color: #555;
+            }
+            .termo-print .content p,
+            .termo-print .content li {
+                font-size: 11pt;
+                line-height: 1.5;
+                margin: 4px 0;
+            }
+            .termo-print .content .items-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 12px 0;
+                font-size: 11pt;
+            }
+            .termo-print .content .items-table th,
+            .termo-print .content .items-table td {
+                border: 1px solid #000;
+                padding: 4px 8px;
+                text-align: left;
+            }
+            .termo-print .signature {
+                margin-top: 50px;
+                text-align: center;
+            }
+            .termo-print .signature .line {
+                border-top: 1px solid #000;
+                width: 60%;
+                margin: 30px auto 6px;
+            }
+        }
+
+        /* ===== STATUS DE CONEXÃO ===== */
+        #firebaseStatus {
+            font-size: 0.7rem;
+            padding: 2px 10px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            display: inline-block;
+        }
+        #firebaseStatus.loading {
+            background: #f39c12;
+        }
+        #firebaseStatus.online {
+            background: #2ecc71;
+        }
+        #firebaseStatus.offline {
+            background: #e74c3c;
+        }
+
+        @media (max-width: 900px) {
+            .tab-content.kanban-tab {
+                flex-direction: column;
+            }
+            .trello-columns {
+                flex: 1 1 auto;
+                min-width: unset;
+            }
+            .map-wrapper {
+                min-height: 300px;
+            }
+            .origin-control {
+                width: 180px;
+                top: 60px;
+                right: 5px;
+                padding: 8px;
+            }
+            .dashboard-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .report-filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
     </style>
 </head>
 <body>
@@ -171,21 +924,39 @@
         </div>
     </header>
 
-    <!-- ABAS (MANTIDAS IGUAIS) -->
+    <!-- Abas -->
     <div class="tab-content active kanban-tab" id="tab-kanban">
         <div class="trello-columns">
-            <div class="column" data-status="todo" id="col-todo"><h3>📋 A Fazer <span id="count-todo">0</span></h3><div class="card-list" id="list-todo"></div></div>
-            <div class="column" data-status="separacao" id="col-separacao"><h3>📦 Separação <span id="count-separacao">0</span></h3><div class="card-list" id="list-separacao"></div></div>
-            <div class="column" data-status="rota" id="col-rota"><h3>🚚 Em Rota <span id="count-rota">0</span></h3><div class="card-list" id="list-rota"></div></div>
-            <div class="column" data-status="entregue" id="col-entregue"><h3>✅ Entregue <span id="count-entregue">0</span></h3><div class="card-list" id="list-entregue"></div></div>
-            <div class="column" data-status="problema" id="col-problema"><h3>⚠️ Problema <span id="count-problema">0</span></h3><div class="card-list" id="list-problema"></div></div>
+            <div class="column" data-status="todo" id="col-todo">
+                <h3>📋 A Fazer <span id="count-todo">0</span></h3>
+                <div class="card-list" id="list-todo"></div>
+            </div>
+            <div class="column" data-status="separacao" id="col-separacao">
+                <h3>📦 Separação <span id="count-separacao">0</span></h3>
+                <div class="card-list" id="list-separacao"></div>
+            </div>
+            <div class="column" data-status="rota" id="col-rota">
+                <h3>🚚 Em Rota <span id="count-rota">0</span></h3>
+                <div class="card-list" id="list-rota"></div>
+            </div>
+            <div class="column" data-status="entregue" id="col-entregue">
+                <h3>✅ Entregue <span id="count-entregue">0</span></h3>
+                <div class="card-list" id="list-entregue"></div>
+            </div>
+            <div class="column" data-status="problema" id="col-problema">
+                <h3>⚠️ Problema <span id="count-problema">0</span></h3>
+                <div class="card-list" id="list-problema"></div>
+            </div>
         </div>
     </div>
 
     <div class="tab-content map-tab" id="tab-map">
         <div class="map-wrapper">
             <div id="map"></div>
-            <div class="map-search"><input type="text" id="mapSearchInput" placeholder="Buscar local..." /><button id="btnMapSearch">Buscar</button></div>
+            <div class="map-search">
+                <input type="text" id="mapSearchInput" placeholder="Buscar local..." />
+                <button id="btnMapSearch">Buscar</button>
+            </div>
             <button class="map-route-btn" id="btnOptimizeRoute">🛣️ Otimizar Rota (Pendentes)</button>
             <div class="route-info" id="routeInfo"></div>
             <div class="origin-control">
@@ -202,7 +973,11 @@
 
     <div class="tab-content calendar-tab" id="tab-calendar">
         <div class="calendar-container">
-            <div class="calendar-header"><button id="calPrev">◀</button><h2 id="calMonthYear">Setembro 2026</h2><button id="calNext">▶</button></div>
+            <div class="calendar-header">
+                <button id="calPrev">◀</button>
+                <h2 id="calMonthYear">Setembro 2026</h2>
+                <button id="calNext">▶</button>
+            </div>
             <div class="calendar-grid" id="calendarGrid"></div>
             <div style="margin-top:8px;font-size:0.8rem;color:#5e6c84;">Clique em uma entrega para editar. Passe o mouse sobre a etiqueta para excluir (ícone X).</div>
         </div>
@@ -212,9 +987,18 @@
         <div class="dashboard-container">
             <div class="dashboard-cards" id="dashCards"></div>
             <div class="dashboard-charts">
-                <div class="chart-box"><h3>📊 Entregas por Status</h3><canvas id="statusChart"></canvas></div>
-                <div class="chart-box"><h3>📅 Entregas por Dia (últimos 7 dias)</h3><canvas id="dailyChart"></canvas></div>
-                <div class="chart-box" style="grid-column: span 2;"><h3>📈 Entregas por Responsável</h3><canvas id="responsibleChart"></canvas></div>
+                <div class="chart-box">
+                    <h3>📊 Entregas por Status</h3>
+                    <canvas id="statusChart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <h3>📅 Entregas por Dia (últimos 7 dias)</h3>
+                    <canvas id="dailyChart"></canvas>
+                </div>
+                <div class="chart-box" style="grid-column: span 2;">
+                    <h3>📈 Entregas por Responsável</h3>
+                    <canvas id="responsibleChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -222,18 +1006,68 @@
     <div class="tab-content report-tab" id="tab-report">
         <div class="report-container">
             <div class="report-filters">
-                <div class="filter-group"><label>Período</label><select id="filterPeriod"><option value="today">Hoje</option><option value="tomorrow">Amanhã</option><option value="week">Esta semana</option><option value="month" selected>Este mês</option><option value="custom">Personalizado</option></select></div>
-                <div class="filter-group" id="dateRangeGroup" style="display:none;"><label>De</label><input type="date" id="filterDateStart" /><label>Até</label><input type="date" id="filterDateEnd" /></div>
-                <div class="filter-group"><label>Status</label><select id="filterStatus"><option value="all">Todos</option><option value="todo">A Fazer</option><option value="separacao">Separação</option><option value="rota">Em Rota</option><option value="entregue">Entregue</option><option value="problema">Problema</option></select></div>
-                <div class="filter-group"><label>Responsável</label><select id="filterResponsible"><option value="all">Todos</option></select></div>
-                <div class="filter-group"><button id="btnApplyFilters">Aplicar Filtros</button></div>
+                <div class="filter-group">
+                    <label>Período</label>
+                    <select id="filterPeriod">
+                        <option value="today">Hoje</option>
+                        <option value="tomorrow">Amanhã</option>
+                        <option value="week">Esta semana</option>
+                        <option value="month" selected>Este mês</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="dateRangeGroup" style="display:none;">
+                    <label>De</label>
+                    <input type="date" id="filterDateStart" />
+                    <label>Até</label>
+                    <input type="date" id="filterDateEnd" />
+                </div>
+                <div class="filter-group">
+                    <label>Status</label>
+                    <select id="filterStatus">
+                        <option value="all">Todos</option>
+                        <option value="todo">A Fazer</option>
+                        <option value="separacao">Separação</option>
+                        <option value="rota">Em Rota</option>
+                        <option value="entregue">Entregue</option>
+                        <option value="problema">Problema</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Responsável</label>
+                    <select id="filterResponsible">
+                        <option value="all">Todos</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <button id="btnApplyFilters">Aplicar Filtros</button>
+                </div>
             </div>
-            <div class="report-actions"><button id="btnExportCSV">📥 Exportar CSV</button><button id="btnPrintReport">🖨️ Imprimir</button></div>
-            <div id="reportTableWrapper"><table id="reportTable"><thead><tr><th>Pedido</th><th>Cliente</th><th>Telefone</th><th>Data</th><th>Responsável</th><th>Endereço</th><th>Status</th><th>Tipo</th></tr></thead><tbody id="reportBody"></tbody></table></div>
+            <div class="report-actions">
+                <button id="btnExportCSV">📥 Exportar CSV</button>
+                <button id="btnPrintReport">🖨️ Imprimir</button>
+            </div>
+            <div id="reportTableWrapper">
+                <table id="reportTable">
+                    <thead>
+                        <tr>
+                            <th>Pedido</th>
+                            <th>Cliente</th>
+                            <th>Telefone</th>
+                            <th>Data</th>
+                            <th>Responsável</th>
+                            <th>Endereço</th>
+                            <th>Status</th>
+                            <th>Tipo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!-- MODAIS -->
+    <!-- Modal Nova/Editar -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-box">
             <h2 id="modalTitle">📦 Nova Entrega</h2>
@@ -254,9 +1088,21 @@
                 <label for="address">Endereço *</label>
                 <input type="text" id="address" placeholder="Rua, número..." required />
                 <label for="deliveryType">Tipo de entrega *</label>
-                <select id="deliveryType" required><option value="consignacao">Consignação</option><option value="retirada">Retirada</option><option value="visita">Visita Técnica</option><option value="emprestimo">Empréstimo</option><option value="montagem">Entrega e Montagem</option></select>
+                <select id="deliveryType" required>
+                    <option value="consignacao">Consignação</option>
+                    <option value="retirada">Retirada</option>
+                    <option value="visita">Visita Técnica</option>
+                    <option value="emprestimo">Empréstimo</option>
+                    <option value="montagem">Entrega e Montagem</option>
+                </select>
                 <label for="status">Status</label>
-                <select id="status"><option value="todo">A Fazer</option><option value="separacao">Separação</option><option value="rota">Em Rota</option><option value="entregue">Entregue</option><option value="problema">Problema</option></select>
+                <select id="status">
+                    <option value="todo">A Fazer</option>
+                    <option value="separacao">Separação</option>
+                    <option value="rota">Em Rota</option>
+                    <option value="entregue">Entregue</option>
+                    <option value="problema">Problema</option>
+                </select>
                 <div id="coordInfo" class="coord-info" style="display:none;">📍 Coordenadas: <span id="coordDisplay"></span></div>
                 <div class="modal-actions">
                     <button type="button" class="btn-delete" id="btnDeleteModal" style="display:none;">🗑️ Excluir</button>
@@ -267,6 +1113,7 @@
         </div>
     </div>
 
+    <!-- Modal Confirmar Entrega -->
     <div class="modal-overlay" id="confirmModal">
         <div class="modal-box">
             <h2>✅ Confirmar Entrega</h2>
@@ -286,6 +1133,7 @@
         </div>
     </div>
 
+    <!-- Elemento para impressão dos termos -->
     <div class="termo-print" id="termoPrint"></div>
 
     <!-- ============================================================ -->
@@ -293,7 +1141,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // ================================================================
-        //  CONFIGURAÇÃO DO FIREBASE
+        //  FIREBASE - CONFIGURAÇÃO
         // ================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyCN8rdDUulnbm13ctudGgglPVm4yOKRbVc",
@@ -314,6 +1162,73 @@
         function setStatus(text, className) {
             statusEl.textContent = text;
             statusEl.className = className;
+        }
+
+        // ================================================================
+        //  CRUD - FIRESTORE SEGURO (CORRIGIDO)
+        // ================================================================
+
+        async function addDelivery(data) {
+            const orderNumber = String(data.orderNumber || '').trim();
+            if (!orderNumber) throw new Error('Número do pedido é obrigatório');
+
+            const docRef = db.collection('entregas').doc(orderNumber);
+            const existing = await docRef.get();
+
+            if (existing.exists) {
+                throw new Error(`O pedido ${orderNumber} já existe.`);
+            }
+
+            await docRef.set({
+                ...data,
+                orderNumber: orderNumber
+            });
+
+            console.log(`✅ Pedido ${orderNumber} criado com sucesso.`);
+            return orderNumber;
+        }
+
+        async function updateDelivery(orderNumber, data) {
+            const id = String(orderNumber || '').trim();
+            if (!id) throw new Error('Número do pedido é obrigatório');
+
+            const docRef = db.collection('entregas').doc(id);
+            const existing = await docRef.get();
+
+            if (!existing.exists) {
+                console.warn(`⚠️ Documento ${id} não encontrado. Criando...`);
+                await docRef.set({
+                    ...data,
+                    orderNumber: id
+                }, { merge: true });
+                console.log(`✅ Documento ${id} criado com sucesso.`);
+                return;
+            }
+
+            await docRef.update(data);
+            console.log(`✅ Documento ${id} atualizado com sucesso.`);
+        }
+
+        async function deleteDelivery(orderNumber) {
+            const id = String(orderNumber || '').trim();
+            if (!id) throw new Error('Número do pedido é obrigatório');
+
+            const docRef = db.collection('entregas').doc(id);
+            const existing = await docRef.get();
+
+            if (!existing.exists) {
+                throw new Error(`O pedido ${id} não existe no Firestore.`);
+            }
+
+            await docRef.delete();
+            console.log(`🗑️ Pedido ${id} excluído com sucesso.`);
+        }
+
+        async function saveOriginToFirestore(coords, address) {
+            await db.collection('config').doc('origin').set({
+                coords,
+                address
+            }, { merge: true });
         }
 
         // ================================================================
@@ -348,32 +1263,6 @@
         };
 
         // ================================================================
-        //  CRUD - CORREÇÃO DEFINITIVA
-        // ================================================================
-
-        async function addDelivery(data) {
-            const orderNumber = data.orderNumber;
-            if (!orderNumber) throw new Error('Número do pedido é obrigatório');
-            const docRef = db.collection('entregas').doc(orderNumber);
-            await docRef.set(data);
-            return orderNumber;
-        }
-
-        async function updateDelivery(orderNumber, data) {
-            if (!orderNumber) throw new Error('Número do pedido é obrigatório');
-            await db.collection('entregas').doc(orderNumber).update(data);
-        }
-
-        async function deleteDelivery(orderNumber) {
-            if (!orderNumber) throw new Error('Número do pedido é obrigatório');
-            await db.collection('entregas').doc(orderNumber).delete();
-        }
-
-        async function saveOriginToFirestore(coords, address) {
-            await db.collection('config').doc('origin').set({ coords, address });
-        }
-
-        // ================================================================
         //  CARREGAR DADOS DO FIRESTORE (SNAPSHOT)
         // ================================================================
         function iniciarSnapshot() {
@@ -391,15 +1280,13 @@
                         });
                     });
 
-                    console.log('📦 Dados carregados do Firestore:', deliveries.length, 'entregas');
+                    console.log('📦 Dados carregados:', deliveries.length, 'entregas');
 
-                    // Se não houver dados, criar exemplos
                     if (deliveries.length === 0) {
                         criarDadosExemplo();
                         return;
                     }
 
-                    // Carregar origem
                     db.collection('config').doc('origin').get()
                         .then(doc => {
                             if (doc.exists) {
@@ -437,11 +1324,11 @@
             const hoje = new Date().toISOString().split('T')[0];
             const exemplos = [{
                 orderNumber: '100',
-                client: 'Maria Oliveira',
+                client: 'Maria Exemplo',
                 phone: '(91) 99999-1111',
                 responsible: 'Carlos',
                 deliveryDate: hoje,
-                items: 'Sofá cinza 3 lugares\nPoltrona Mustafa',
+                items: 'Sofá\nPoltrona',
                 address: 'Av. Paulista, 1578, São Paulo - SP',
                 lat: -23.5615,
                 lng: -46.6561,
@@ -454,11 +1341,11 @@
                 duration: null
             }, {
                 orderNumber: '101',
-                client: 'João Pereira',
+                client: 'João Exemplo',
                 phone: '(91) 99999-2222',
                 responsible: 'Ana',
                 deliveryDate: hoje,
-                items: 'Mesa de madeira\n6 cadeiras',
+                items: 'Mesa\n6 cadeiras',
                 address: 'Rua Augusta, 500, São Paulo - SP',
                 lat: -23.5532,
                 lng: -46.6596,
@@ -471,41 +1358,23 @@
                 duration: null
             }, {
                 orderNumber: '102',
-                client: 'Carla Souza',
+                client: 'Carla Exemplo',
                 phone: '(91) 99999-3333',
                 responsible: 'Carlos',
                 deliveryDate: hoje,
-                items: 'Cama box\nColchão ortopédico',
+                items: 'Cama box\nColchão',
                 address: 'Alameda Santos, 1000, São Paulo - SP',
                 lat: -23.5596,
                 lng: -46.6537,
                 status: 'entregue',
                 type: 'montagem',
-                receivedBy: 'Carla Souza',
+                receivedBy: 'Carla Exemplo',
                 confirmObs: 'Tudo ok',
                 confirmDate: new Date().toISOString(),
                 distance: null,
                 duration: null
-            }, {
-                orderNumber: '103',
-                client: 'Roberto Lima',
-                phone: '(91) 99999-4444',
-                responsible: 'Fernanda',
-                deliveryDate: hoje,
-                items: 'Estante branca\n6 prateleiras',
-                address: 'Rua Oscar Freire, 200, São Paulo - SP',
-                lat: -23.5585,
-                lng: -46.6812,
-                status: 'rota',
-                type: 'emprestimo',
-                receivedBy: null,
-                confirmObs: null,
-                confirmDate: null,
-                distance: null,
-                duration: null
             }];
 
-            // Salvar cada exemplo no Firestore
             for (const ex of exemplos) {
                 try {
                     await db.collection('entregas').doc(ex.orderNumber).set(ex);
@@ -515,7 +1384,6 @@
                 }
             }
 
-            // Recarregar dados
             setTimeout(() => {
                 iniciarSnapshot();
             }, 500);
@@ -1412,7 +2280,7 @@
         });
 
         // ================================================================
-        //  MODAL NOVA/EDIÇÃO
+        //  MODAL NOVA/EDIÇÃO (CORRIGIDO)
         // ================================================================
         let manualCoords = null;
         let editingOrderNumber = null;
@@ -1422,6 +2290,7 @@
             document.getElementById('editId').value = '';
             document.getElementById('modalTitle').textContent = '📦 Nova Entrega';
             document.getElementById('btnDeleteModal').style.display = 'none';
+            document.getElementById('orderNumber').disabled = false;
             manualCoords = { lat, lng };
             document.getElementById('coordInfo').style.display = 'block';
             document.getElementById('coordDisplay').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
@@ -1441,7 +2310,7 @@
             document.getElementById('modalTitle').textContent = '✏️ Editar Entrega';
             document.getElementById('btnDeleteModal').style.display = 'inline-block';
             document.getElementById('orderNumber').value = delivery.orderNumber || '';
-            document.getElementById('orderNumber').disabled = true; // Não permite editar o número do pedido
+            document.getElementById('orderNumber').disabled = true; // Impede edição do número do pedido
             document.getElementById('client').value = delivery.client || '';
             document.getElementById('phone').value = delivery.phone || '';
             document.getElementById('responsible').value = delivery.responsible || '';
@@ -1783,8 +2652,8 @@
         link.href = manifestUrl;
         document.head.appendChild(link);
 
-        console.log('🚀 Sistema inicializado com sucesso!');
-        console.log('📊 Firestore conectado e sincronizado.');
+        console.log('🚀 Sistema completo e corrigido!');
+        console.log('📊 Firestore conectado. Aguardando dados...');
     </script>
 </body>
 </html>
