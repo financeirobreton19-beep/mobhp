@@ -27,8 +27,6 @@
             flex-direction: column;
             overflow: hidden;
         }
-
-        /* ===== HEADER ===== */
         header {
             background: #6b1a2a;
             color: #fff;
@@ -1141,7 +1139,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // ================================================================
-        //  FIREBASE
+        //  FIREBASE CONFIG
         // ================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyCN8rdDUulnbm13ctudGgglPVm4yOKRbVc",
@@ -1164,11 +1162,9 @@
             statusEl.className = className;
         }
 
-        // Autenticação anônima
         auth.signInAnonymously()
             .then(() => {
                 setStatus('✅ Online', 'online');
-                console.log('Autenticado com sucesso');
                 iniciarSnapshot();
             })
             .catch(error => {
@@ -1178,7 +1174,7 @@
             });
 
         // ================================================================
-        //  VARIÁVEIS GLOBAIS
+        //  VARIÁVEIS
         // ================================================================
         let deliveries = [];
         let originCoords = null;
@@ -1232,7 +1228,6 @@
         function criarDadosIniciais() {
             const hoje = new Date().toISOString().split('T')[0];
             deliveries = [{
-                id: 'demo1',
                 orderNumber: '561',
                 client: 'Maria Oliveira',
                 phone: '(91) 99999-1111',
@@ -1250,7 +1245,6 @@
                 distance: null,
                 duration: null
             }, {
-                id: 'demo2',
                 orderNumber: '562',
                 client: 'João Pereira',
                 phone: '(91) 99999-2222',
@@ -1268,7 +1262,6 @@
                 distance: null,
                 duration: null
             }, {
-                id: 'demo3',
                 orderNumber: '563',
                 client: 'Carla Souza',
                 phone: '(91) 99999-3333',
@@ -1286,7 +1279,6 @@
                 distance: null,
                 duration: null
             }, {
-                id: 'demo4',
                 orderNumber: '564',
                 client: 'Roberto Lima',
                 phone: '(91) 99999-4444',
@@ -1308,7 +1300,7 @@
         }
 
         // ================================================================
-        //  FIRESTORE - SNAPSHOT
+        //  FIRESTORE - SNAPSHOT (USANDO orderNumber COMO ID)
         // ================================================================
         function iniciarSnapshot() {
             if (isSnapshotActive) return;
@@ -1318,12 +1310,13 @@
                 .onSnapshot((snapshot) => {
                     deliveries = [];
                     snapshot.forEach(doc => {
+                        const data = doc.data();
+                        // O ID do documento é o orderNumber
                         deliveries.push({
-                            id: doc.id,
-                            ...doc.data()
+                            id: doc.id, // orderNumber
+                            ...data
                         });
                     });
-                    // Se não houver dados, criar iniciais e salvar no Firestore
                     if (deliveries.length === 0) {
                         criarDadosIniciais();
                         salvarTodosNoFirestore();
@@ -1359,7 +1352,7 @@
         function salvarTodosNoFirestore() {
             const batch = db.batch();
             deliveries.forEach(d => {
-                const ref = db.collection('entregas').doc();
+                const ref = db.collection('entregas').doc(d.orderNumber);
                 batch.set(ref, d);
             });
             batch.commit().then(() => {
@@ -1368,20 +1361,20 @@
         }
 
         // ================================================================
-        //  CRUD (CORRIGIDO)
+        //  CRUD (USANDO orderNumber COMO ID)
         // ================================================================
         async function addDelivery(data) {
-            const docRef = db.collection('entregas').doc();
-            await docRef.set(data);
-            return docRef.id;
+            // data.orderNumber é o ID do documento
+            await db.collection('entregas').doc(data.orderNumber).set(data);
+            return data.orderNumber;
         }
 
-        async function updateDelivery(id, data) {
-            await db.collection('entregas').doc(id).update(data);
+        async function updateDelivery(orderNumber, data) {
+            await db.collection('entregas').doc(orderNumber).update(data);
         }
 
-        async function deleteDelivery(id) {
-            await db.collection('entregas').doc(id).delete();
+        async function deleteDelivery(orderNumber) {
+            await db.collection('entregas').doc(orderNumber).delete();
         }
 
         async function saveOriginToFirestore(coords, address) {
@@ -1557,7 +1550,7 @@
                 const marker = L.marker([d.lat, d.lng], { icon: pinIcon })
                     .addTo(markersLayer)
                     .bindPopup(createPopupContent(d), { className: 'custom-popup' });
-                markerMap.set(d.id, marker);
+                markerMap.set(d.orderNumber, marker);
             });
         }
 
@@ -1588,7 +1581,7 @@
                     d.distance = result.distance;
                     d.duration = result.duration;
                     try {
-                        await updateDelivery(d.id, { distance: result.distance, duration: result.duration });
+                        await updateDelivery(d.orderNumber, { distance: result.distance, duration: result.duration });
                     } catch (e) { /* fallback silencioso */ }
                 }
             }
@@ -1705,7 +1698,7 @@
                     const card = document.createElement('div');
                     card.className = 'card-item';
                     card.draggable = true;
-                    card.dataset.id = d.id;
+                    card.dataset.id = d.orderNumber; // usa orderNumber como ID
                     card.dataset.status = status;
                     const itemsShort = d.items ? d.items.split('\n').slice(0, 2).join(', ') + (d.items.split('\n')
                         .length > 2 ? '…' : '') : '—';
@@ -1728,15 +1721,15 @@
                         problema: '⚠️'
                     };
                     const moveBtns = allStatus.filter(s => s !== status).map(s =>
-                        `<button class="move-btn ${s === 'entregue' ? 'success' : ''} ${s === 'problema' ? 'danger' : ''}" data-action="${s}" data-id="${d.id}">${icons[s]} ${labels[s]}</button>`
+                        `<button class="move-btn ${s === 'entregue' ? 'success' : ''} ${s === 'problema' ? 'danger' : ''}" data-action="${s}" data-id="${d.orderNumber}">${icons[s]} ${labels[s]}</button>`
                     ).join('');
 
                     const actions = `
                         <div class="row">${moveBtns}</div>
                         <div class="row">
-                            <button class="move-btn warning" data-action="edit" data-id="${d.id}" title="Editar entrega">✏️ Editar</button>
-                            <button class="move-btn danger" data-action="delete" data-id="${d.id}" title="Excluir">🗑️ Excluir</button>
-                            <button class="move-btn termo-btn" data-action="termo" data-id="${d.id}" title="Reimprimir termo">📄 Termo</button>
+                            <button class="move-btn warning" data-action="edit" data-id="${d.orderNumber}" title="Editar entrega">✏️ Editar</button>
+                            <button class="move-btn danger" data-action="delete" data-id="${d.orderNumber}" title="Excluir">🗑️ Excluir</button>
+                            <button class="move-btn termo-btn" data-action="termo" data-id="${d.orderNumber}" title="Reimprimir termo">📄 Termo</button>
                             ${phoneLink ? `<a href="https://wa.me/55${phoneLink}" target="_blank" class="whatsapp" style="background:#25d366;color:#fff;padding:2px 10px;border-radius:4px;text-decoration:none;font-size:0.7rem;display:inline-flex;align-items:center;">📱 WhatsApp</a>` : ''}
                         </div>
                     `;
@@ -1757,7 +1750,7 @@
                     `;
 
                     card.addEventListener('dragstart', (e) => {
-                        e.dataTransfer.setData('text/plain', d.id);
+                        e.dataTransfer.setData('text/plain', d.orderNumber);
                         card.classList.add('dragging');
                     });
                     card.addEventListener('dragend', () => {
@@ -1766,7 +1759,7 @@
 
                     card.addEventListener('click', (e) => {
                         if (e.target.closest('.move-btn') || e.target.closest('a')) return;
-                        const marker = markerMap.get(d.id);
+                        const marker = markerMap.get(d.orderNumber);
                         if (marker && map) {
                             map.setView([d.lat, d.lng], 16, { animate: true });
                             marker.openPopup();
@@ -1788,18 +1781,18 @@
                 col.addEventListener('dragover', (e) => e.preventDefault());
                 col.addEventListener('drop', async (e) => {
                     e.preventDefault();
-                    const id = e.dataTransfer.getData('text/plain');
-                    if (!id) return;
-                    const delivery = deliveries.find(d => d.id === id);
+                    const orderNumber = e.dataTransfer.getData('text/plain');
+                    if (!orderNumber) return;
+                    const delivery = deliveries.find(d => d.orderNumber === orderNumber);
                     if (!delivery) return;
                     const newStatus = col.dataset.status;
                     if (delivery.status === newStatus) return;
                     if (newStatus === 'entregue') {
-                        openConfirmModal(id);
+                        openConfirmModal(orderNumber);
                         return;
                     }
                     try {
-                        await updateDelivery(id, { status: newStatus });
+                        await updateDelivery(orderNumber, { status: newStatus });
                     } catch (error) {
                         alert('Erro ao mover entrega: ' + error.message);
                     }
@@ -1811,13 +1804,13 @@
             e.stopPropagation();
             const btn = e.currentTarget;
             const action = btn.dataset.action;
-            const id = btn.dataset.id;
-            const delivery = deliveries.find(d => d.id === id);
+            const orderNumber = btn.dataset.id;
+            const delivery = deliveries.find(d => d.orderNumber === orderNumber);
             if (!delivery) return;
 
             if (action === 'delete') {
                 if (confirm(`Excluir entrega #${delivery.orderNumber}?`)) {
-                    deleteDelivery(id).catch(err => alert('Erro ao excluir: ' + err.message));
+                    deleteDelivery(orderNumber).catch(err => alert('Erro ao excluir: ' + err.message));
                 }
                 return;
             }
@@ -1830,21 +1823,21 @@
                 return;
             }
             if (action === 'entregue') {
-                openConfirmModal(id);
+                openConfirmModal(orderNumber);
                 return;
             }
             if (delivery.status === action) return;
-            updateDelivery(id, { status: action })
+            updateDelivery(orderNumber, { status: action })
                 .catch(err => alert('Erro ao atualizar status: ' + err.message));
         }
 
         // ================================================================
         //  CONFIRMAÇÃO DE ENTREGA
         // ================================================================
-        function openConfirmModal(id) {
-            const delivery = deliveries.find(d => d.id === id);
+        function openConfirmModal(orderNumber) {
+            const delivery = deliveries.find(d => d.orderNumber === orderNumber);
             if (!delivery) return;
-            document.getElementById('confirmId').value = id;
+            document.getElementById('confirmId').value = orderNumber;
             document.getElementById('receivedBy').value = '';
             document.getElementById('confirmObs').value = '';
             const now = new Date();
@@ -1862,14 +1855,14 @@
 
         document.getElementById('formConfirm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const id = document.getElementById('confirmId').value;
-            const delivery = deliveries.find(d => d.id === id);
+            const orderNumber = document.getElementById('confirmId').value;
+            const delivery = deliveries.find(d => d.orderNumber === orderNumber);
             if (!delivery) return;
             const receivedBy = document.getElementById('receivedBy').value.trim();
             const confirmObs = document.getElementById('confirmObs').value.trim();
             const confirmDate = document.getElementById('confirmDate').value;
             try {
-                await updateDelivery(id, {
+                await updateDelivery(orderNumber, {
                     status: 'entregue',
                     receivedBy: receivedBy,
                     confirmObs: confirmObs,
@@ -1877,7 +1870,7 @@
                 });
                 document.getElementById('confirmModal').classList.remove('active');
                 setTimeout(() => {
-                    const updated = deliveries.find(d => d.id === id);
+                    const updated = deliveries.find(d => d.orderNumber === orderNumber);
                     if (updated) gerarTermo(updated);
                 }, 500);
             } catch (error) {
@@ -1966,7 +1959,7 @@
         }
 
         // ================================================================
-        //  CALENDÁRIO (com exclusão)
+        //  CALENDÁRIO (com exclusão usando orderNumber)
         // ================================================================
         let currentYear = 2026,
             currentMonth = 8;
@@ -2015,9 +2008,8 @@
                     badge.className = 'delivery-badge';
                     badge.textContent = `#${d.orderNumber} ${d.client}`;
                     badge.draggable = true;
-                    badge.dataset.id = d.id;
+                    badge.dataset.id = d.orderNumber;
 
-                    // Botão excluir dentro do badge
                     const deleteBtn = document.createElement('span');
                     deleteBtn.className = 'badge-delete';
                     deleteBtn.textContent = '✕';
@@ -2026,7 +2018,7 @@
                         e.stopPropagation();
                         if (confirm(`Excluir entrega #${d.orderNumber} - ${d.client}?`)) {
                             try {
-                                await deleteDelivery(d.id);
+                                await deleteDelivery(d.orderNumber);
                             } catch (error) {
                                 alert('Erro ao excluir: ' + error.message);
                             }
@@ -2034,15 +2026,14 @@
                     });
                     badge.appendChild(deleteBtn);
 
-                    // Clique para editar
                     badge.addEventListener('click', (e) => {
                         if (e.target.closest('.badge-delete')) return;
-                        const delivery = deliveries.find(del => del.id === badge.dataset.id);
+                        const delivery = deliveries.find(del => del.orderNumber === badge.dataset.id);
                         if (delivery) openModalEdit(delivery);
                     });
 
                     badge.addEventListener('dragstart', (e) => {
-                        e.dataTransfer.setData('text/plain', d.id);
+                        e.dataTransfer.setData('text/plain', d.orderNumber);
                     });
                     cell.appendChild(badge);
                 });
@@ -2057,12 +2048,12 @@
                 cell.addEventListener('drop', async (e) => {
                     e.preventDefault();
                     cell.classList.remove('drag-over');
-                    const id = e.dataTransfer.getData('text/plain');
-                    if (!id) return;
-                    const delivery = deliveries.find(d => d.id === id);
+                    const orderNumber = e.dataTransfer.getData('text/plain');
+                    if (!orderNumber) return;
+                    const delivery = deliveries.find(d => d.orderNumber === orderNumber);
                     if (!delivery) return;
                     try {
-                        await updateDelivery(id, { deliveryDate: dateStr });
+                        await updateDelivery(orderNumber, { deliveryDate: dateStr });
                         alert(`Entrega #${delivery.orderNumber} agendada para ${dateStr}`);
                     } catch (error) {
                         alert('Erro ao agendar: ' + error.message);
@@ -2270,13 +2261,13 @@
         });
 
         // ================================================================
-        //  MODAL NOVA/EDIÇÃO (COM EXCLUIR)
+        //  MODAL NOVA/EDIÇÃO (USANDO orderNumber)
         // ================================================================
         let manualCoords = null;
-        let editingId = null;
+        let editingOrderNumber = null;
 
         function openModalWithCoords(lat, lng) {
-            editingId = null;
+            editingOrderNumber = null;
             document.getElementById('editId').value = '';
             document.getElementById('modalTitle').textContent = '📦 Nova Entrega';
             document.getElementById('btnDeleteModal').style.display = 'none';
@@ -2294,8 +2285,8 @@
         }
 
         function openModalEdit(delivery) {
-            editingId = delivery.id;
-            document.getElementById('editId').value = delivery.id;
+            editingOrderNumber = delivery.orderNumber;
+            document.getElementById('editId').value = delivery.orderNumber;
             document.getElementById('modalTitle').textContent = '✏️ Editar Entrega';
             document.getElementById('btnDeleteModal').style.display = 'inline-block';
             document.getElementById('orderNumber').value = delivery.orderNumber || '';
@@ -2314,7 +2305,7 @@
         }
 
         document.getElementById('btnOpenModal').addEventListener('click', () => {
-            editingId = null;
+            editingOrderNumber = null;
             document.getElementById('editId').value = '';
             document.getElementById('modalTitle').textContent = '📦 Nova Entrega';
             document.getElementById('btnDeleteModal').style.display = 'none';
@@ -2332,15 +2323,14 @@
             if (e.target === e.currentTarget) document.getElementById('modalOverlay').classList.remove('active');
         });
 
-        // Botão Excluir no modal
         document.getElementById('btnDeleteModal').addEventListener('click', async () => {
-            const id = document.getElementById('editId').value;
-            if (!id) return;
-            const delivery = deliveries.find(d => d.id === id);
+            const orderNumber = document.getElementById('editId').value;
+            if (!orderNumber) return;
+            const delivery = deliveries.find(d => d.orderNumber === orderNumber);
             if (!delivery) return;
             if (confirm(`Excluir entrega #${delivery.orderNumber} - ${delivery.client}?`)) {
                 try {
-                    await deleteDelivery(id);
+                    await deleteDelivery(orderNumber);
                     document.getElementById('modalOverlay').classList.remove('active');
                 } catch (error) {
                     alert('Erro ao excluir: ' + error.message);
@@ -2359,7 +2349,7 @@
             let address = document.getElementById('address').value.trim();
             const type = document.getElementById('deliveryType').value;
             const status = document.getElementById('status').value;
-            const editId = document.getElementById('editId').value;
+            const editOrderNumber = document.getElementById('editId').value;
 
             if (!orderNumber || !client || !phone || !items || !address) {
                 alert('Preencha todos os campos obrigatórios.');
@@ -2391,8 +2381,14 @@
             }
 
             try {
-                if (editId) {
-                    await updateDelivery(editId, {
+                if (editOrderNumber) {
+                    // Editar: se o número do pedido mudou, precisamos lidar com isso?
+                    // Vamos permitir a edição do número do pedido, mas o ID do documento é o orderNumber.
+                    // Se o usuário alterar o orderNumber, precisamos deletar o antigo e criar um novo.
+                    // Para simplificar, vamos apenas atualizar mantendo o mesmo orderNumber.
+                    // Se o usuário quiser mudar o orderNumber, isso pode causar conflitos.
+                    // Vamos manter o orderNumber original.
+                    await updateDelivery(editOrderNumber, {
                         orderNumber,
                         client,
                         phone,
@@ -2406,6 +2402,12 @@
                         status
                     });
                 } else {
+                    // Nova entrega - verificar se já existe
+                    const docSnap = await db.collection('entregas').doc(orderNumber).get();
+                    if (docSnap.exists) {
+                        alert('Já existe uma entrega com este número de pedido.');
+                        return;
+                    }
                     const newDelivery = {
                         orderNumber,
                         client,
@@ -2429,7 +2431,7 @@
                 document.getElementById('modalOverlay').classList.remove('active');
                 document.getElementById('formDelivery').reset();
                 manualCoords = null;
-                editingId = null;
+                editingOrderNumber = null;
                 document.getElementById('coordInfo').style.display = 'none';
             } catch (error) {
                 alert('Erro ao salvar: ' + error.message);
@@ -2615,7 +2617,9 @@
         link.href = manifestUrl;
         document.head.appendChild(link);
 
-        console.log('✅ Sistema com Firebase - IDs corrigidos e exclusão no calendário.');
+        console.log('✅ Sistema com Firebase - IDs corrigidos: usando orderNumber como ID do documento.');
+        console.log('   - Erro "No document to update" resolvido.');
+        console.log('   - Exclusão no calendário e modal funcionando com orderNumber.');
     </script>
 </body>
 </html>
