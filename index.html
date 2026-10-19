@@ -165,28 +165,48 @@
     .modal-box .coord-info { background: #f4f5f7; padding: 6px 10px; border-radius: 4px; font-size: 0.8rem; color: #2c3e50; margin: 4px 0 8px; }
     .modal-box .section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6b1a2a; font-weight: 700; margin: 14px 0 4px; padding-bottom: 3px; border-bottom: 1px solid #ebecf0; }
 
+    /* ===== IMPRESSÃO: TERMO, EMBARQUE E COMPROVANTE ===== */
     .termo-print { display: none; }
     @media print {
         body * { visibility: hidden; }
         .termo-print, .termo-print * { visibility: visible; }
-        .termo-print { display: block !important; position: absolute; left: 0; top: 0; width: 100%; padding: 40px 50px; font-family: 'Calibri', 'Segoe UI', sans-serif !important; font-size: 11pt; line-height: 1.5; background: #fff; color: #000; }
-        .termo-print .header { text-align: center; font-family: 'Times New Roman', Georgia, serif !important; font-size: 18pt; font-weight: 700; letter-spacing: 6px; color: #6b1a2a; border-bottom: 2px solid #6b1a2a; padding-bottom: 10px; margin-bottom: 20px; }
-        .termo-print .footer { margin-top: 40px; text-align: center; font-size: 10pt; border-top: 1px solid #ccc; padding-top: 10px; color: #555; }
+        .termo-print { display: block !important; position: absolute; left: 0; top: 0; width: 100%; padding: 20px 40px; font-family: 'Calibri', 'Segoe UI', sans-serif !important; font-size: 11pt; line-height: 1.4; background: #fff; color: #000; }
+        
+        .termo-print .header { text-align: center; font-family: 'Times New Roman', Georgia, serif !important; font-size: 18pt; font-weight: 700; letter-spacing: 4px; color: #6b1a2a; border-bottom: 2px solid #6b1a2a; padding-bottom: 8px; margin-bottom: 15px; }
+        .termo-print .footer { margin-top: 30px; text-align: center; font-size: 9pt; border-top: 1px solid #ccc; padding-top: 8px; color: #555; }
         .termo-print .content h2 { text-align: center; font-size: 12.5pt; font-weight: 700; margin: 10px 0 16px; }
-        .termo-print .content p, .termo-print .content li { font-size: 11pt; line-height: 1.5; margin: 4px 0; }
-        .termo-print .content .items-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11pt; }
+        .termo-print .content p, .termo-print .content li { font-size: 11pt; line-height: 1.4; margin: 4px 0; }
+        .termo-print .content .items-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10pt; }
         .termo-print .content .items-table th, .termo-print .content .items-table td { border: 1px solid #000; padding: 4px 8px; text-align: left; }
-        .termo-print .signature { margin-top: 50px; text-align: center; }
+        .termo-print .signature { margin-top: 40px; text-align: center; }
         .termo-print .signature .line { border-top: 1px solid #000; width: 60%; margin: 30px auto 6px; }
         .termo-print .embarque-box { background: #f4f5f7; padding: 10px 14px; border-left: 4px solid #6b1a2a; margin: 12px 0; }
-        .termo-print .embarque-box .linha { display: flex; justify-content: space-between; padding: 3px 0; font-size: 11pt; }
-        .termo-print .embarque-box .label { font-weight: 700; }
+        .termo-print .embarque-box .linha { display: flex; justify-content: space-between; padding: 2px 0; font-size: 10pt; }
+        
+        /* Comprovante Específico */
+        .comprovante-wrapper { page-break-after: always; padding-bottom: 20px; }
+        .comprovante-wrapper .header-comp { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px; }
+        .comprovante-wrapper .header-comp .logo { font-family: 'Times New Roman', serif; font-size: 18pt; font-weight: bold; letter-spacing: 2px; }
+        .comprovante-wrapper .header-comp .title { font-size: 12pt; font-weight: bold; text-transform: uppercase; text-align: center; flex: 1; }
+        .comprovante-wrapper .header-comp .pedido-info { text-align: right; font-size: 8pt; }
+        .comprovante-wrapper .header-comp .pedido-info strong { font-size: 10pt; }
+        
+        .comprovante-wrapper .info-table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 10px; }
+        .comprovante-wrapper .info-table td { padding: 2px 4px; vertical-align: top; }
+        .comprovante-wrapper .info-table .label { font-weight: bold; }
+        
+        .comprovante-wrapper .itens-table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 8px; }
+        .comprovante-wrapper .itens-table th, .comprovante-wrapper .itens-table td { border: 1px solid #000; padding: 3px 4px; text-align: left; }
+        .comprovante-wrapper .itens-table th { background: #e0e0e0 !important; font-size: 7pt; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        
+        .comprovante-wrapper .box-alerta { border: 1px solid #000; padding: 4px; font-size: 7pt; text-align: center; font-weight: bold; margin-bottom: 8px; }
+        .comprovante-wrapper .checkboxes { font-size: 8pt; margin-bottom: 12px; line-height: 1.6; }
+        .comprovante-wrapper .assinatura-box { font-size: 8pt; margin-bottom: 12px; }
+        .comprovante-wrapper .assinatura-line { border-bottom: 1px solid #000; display: inline-block; width: 75%; height: 15px; }
+        .comprovante-wrapper .small-text { font-size: 6pt; text-align: justify; line-height: 1.2; margin-top: 15px; }
 
         body.printing-report * { visibility: visible !important; }
-        body.printing-report header,
-        body.printing-report .tab-content:not(#tab-report),
-        body.printing-report .report-filters,
-        body.printing-report .report-actions { display: none !important; }
+        body.printing-report header, body.printing-report .tab-content:not(#tab-report), body.printing-report .report-filters, body.printing-report .report-actions { display: none !important; }
         body.printing-report #tab-report { display: block !important; padding: 0; }
         body.printing-report #tab-report * { visibility: visible !important; }
         body.printing-report .report-container { box-shadow: none; padding: 0; overflow: visible; }
@@ -454,6 +474,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+           // Funções utilitárias
     function escapeHtml(s) {
         if (s === null || s === undefined) return '';
         return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -469,17 +490,21 @@
             return new Date(dateStr).toLocaleDateString('pt-BR');
         } catch (e) { return ''; }
     }
+
     function formatDateTimeLocal(dtStr) {
         if (!dtStr) return '';
         try { return new Date(dtStr).toLocaleString('pt-BR'); } catch (e) { return ''; }
     }
+
     function getTodayStr() {
         const d = new Date();
         return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
+
     function formatISODate(d) {
         return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
+
     function getWeekRange() {
         const hoje = new Date();
         const dia = hoje.getDay();
@@ -488,6 +513,7 @@
         const dom = new Date(seg); dom.setDate(seg.getDate() + 6);
         return { start: formatISODate(seg), end: formatISODate(dom) };
     }
+
     function getMonthRange() {
         const hoje = new Date();
         const start = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -508,6 +534,9 @@
     function toastError(m)   { showToast(m, 'error'); }
     function toastWarn(m)    { showToast(m, 'warn'); }
 
+    // ================================================================
+    //  FIREBASE CONFIG
+    // ================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyB-3b01PdrMnGD7ZElltbeC36-9geyoxyg",
         authDomain: "mobiliariobreton-5b875.firebaseapp.com",
@@ -569,6 +598,9 @@
     let manualCoords = null;
     let editingOriginalAddress = null;
 
+    const STATUS_LABELS = { todo: 'A Fazer', separacao: 'Separação', rota: 'Em Rota', entregue: 'Entregue', problema: 'Problema' };
+    const TYPE_LABELS = { consignacao: 'Consignação', retirada: 'Retirada', visita: 'Visita Técnica', emprestimo: 'Empréstimo', montagem: 'Entrega e Montagem' };
+
     // ===== BUSCA GLOBAL =====
     let searchTerm = '';
     function normalizedSearch(s) {
@@ -601,9 +633,6 @@
         renderAll();
     }
 
-    const STATUS_LABELS = { todo: 'A Fazer', separacao: 'Separação', rota: 'Em Rota', entregue: 'Entregue', problema: 'Problema' };
-    const TYPE_LABELS = { consignacao: 'Consignação', retirada: 'Retirada', visita: 'Visita Técnica', emprestimo: 'Empréstimo', montagem: 'Entrega e Montagem' };
-
     function iniciarSnapshot() {
         if (isSnapshotActive) return;
         isSnapshotActive = true;
@@ -616,12 +645,6 @@
                 snapshot.forEach(doc => { deliveries.push({ id: doc.id, ...doc.data() }); });
                 setStatus('Online (' + deliveries.length + ')', 'online');
                 console.log('[Firestore] OK —', deliveries.length, 'registros');
-
-                if (deliveries.length === 0) {
-                    toastWarn('Nenhuma entrega encontrada na base.');
-                } else {
-                    toastSuccess(deliveries.length + ' entrega(s) carregada(s).');
-                }
 
                 db.collection('config').doc('origin').get()
                     .then(doc => {
@@ -675,8 +698,7 @@
     }
 
     // ============================================================
-    //  MAPA — ícones agora são criados DENTRO de initMap
-    //  (correção do erro "t.addEventParent is not a function")
+    //  MAPA
     // ============================================================
     let PIN_ICON = null;
     let ORIGIN_ICON = null;
@@ -685,7 +707,6 @@
         if (map) return;
 
         if (typeof L === 'undefined' || typeof L.map !== 'function') {
-            console.warn('[Mapa] Leaflet ainda não carregou. Tentando novamente...');
             setTimeout(initMap, 500);
             return;
         }
@@ -694,7 +715,7 @@
             map = L.map('map').setView([-1.4558, -48.4902], 12);
 
             L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                attribution: '&copy; OpenStreetMap',
                 maxZoom: 19
             }).addTo(map);
 
@@ -722,33 +743,22 @@
                 openModalWithCoords(lat, lng);
             });
 
-                        mapInitialized = true;
+            mapInitialized = true;
             renderMarkers();
             if (deliveries.length) {
-                const valid = deliveries.filter(d =>
-                    typeof d.lat === 'number' && !isNaN(d.lat) &&
-                    typeof d.lng === 'number' && !isNaN(d.lng)
-                );
+                const valid = deliveries.filter(d => typeof d.lat === 'number' && !isNaN(d.lat) && typeof d.lng === 'number' && !isNaN(d.lng));
                 const pontos = valid.map(d => [d.lat, d.lng]);
-                if (originCoords &&
-                    typeof originCoords.lat === 'number' && !isNaN(originCoords.lat) &&
-                    typeof originCoords.lng === 'number' && !isNaN(originCoords.lng)) {
+                if (originCoords && typeof originCoords.lat === 'number' && !isNaN(originCoords.lat) && typeof originCoords.lng === 'number' && !isNaN(originCoords.lng)) {
                     pontos.push([originCoords.lat, originCoords.lng]);
                 }
                 if (pontos.length) {
-                    try {
-                        const bounds = L.latLngBounds(pontos);
-                        map.fitBounds(bounds.pad(0.2));
-                    } catch (e) { console.warn('Não foi possível ajustar o zoom:', e); }
+                    try { map.fitBounds(L.latLngBounds(pontos).pad(0.2)); } catch (e) {}
                 }
             }
             if (originCoords) criarMarcadorOrigem(originCoords.lat, originCoords.lng);
             setTimeout(() => map.invalidateSize(), 200);
             atualizarStatusOrigem();
-        } catch (e) {
-            console.error('[Mapa] Erro:', e);
-            alert('Erro ao inicializar o mapa: ' + e.message);
-        }
+        } catch (e) { alert('Erro ao inicializar o mapa: ' + e.message); }
     }
 
     function criarMarcadorOrigem(lat, lng) {
@@ -944,7 +954,10 @@
             alert(msg);
         } catch (e) { toastError('Erro: ' + e.message); }
     }
-
+       
+    // ================================================================
+    //  KANBAN
+    // ================================================================
     function renderKanban() {
         const lists = {
             todo: document.getElementById('list-todo'),
@@ -1074,12 +1087,18 @@
             btn.removeEventListener('click', handleMove);
             btn.addEventListener('click', handleMove);
         });
+
+        // CORREÇÃO: registra os eventos de drop todas as vezes que renderiza
+        registerColumnDropHandlers();
     }
 
     function registerColumnDropHandlers() {
         document.querySelectorAll('.column').forEach(col => {
-            col.addEventListener('dragover', (e) => e.preventDefault());
-            col.addEventListener('drop', async (e) => {
+            col.ondragover = null;
+            col.ondrop = null;
+            
+            col.ondragover = (e) => e.preventDefault();
+            col.ondrop = async (e) => {
                 e.preventDefault();
                 const orderNumber = e.dataTransfer.getData('text/plain');
                 if (!orderNumber) return;
@@ -1088,6 +1107,7 @@
                 const newStatus = col.dataset.status;
                 if (delivery.status === newStatus) return;
                 if (newStatus === 'entregue') { openConfirmModal(orderNumber); return; }
+                
                 const previousStatus = delivery.status;
                 delivery.status = newStatus;
                 renderKanban();
@@ -1099,7 +1119,7 @@
                     renderKanban();
                     toastError('Não foi possível atualizar: ' + err.message);
                 }
-            });
+            };
         });
     }
 
@@ -1171,50 +1191,180 @@
         } catch (err) { toastError('Erro ao confirmar: ' + err.message); }
     });
 
+    // ================================================================
+    //  TERMO PADRÃO + COMPROVANTE (JUNTOS)
+    // ================================================================
     function gerarTermo(delivery) {
-        const type = delivery.type || 'consignacao';
-        const titles = { consignacao: 'TERMO DE CONSIGNAÇÃO', retirada: 'TERMO DE RETIRADA', visita: 'TERMO DE VISITA TÉCNICA', emprestimo: 'TERMO DE EMPRÉSTIMO', montagem: 'TERMO DE ENTREGA E MONTAGEM' };
         const safe = escapeHtml;
-        let html = '<div class="termo-print"><div class="header">BRETON</div><div class="content">';
-        html += '<h2>' + safe(titles[type] || 'TERMO') + '</h2>';
-        html += '<p><strong>Cliente:</strong> ' + safe(delivery.client) + '</p>';
-        html += '<p><strong>Endereço:</strong> ' + safe(delivery.address) + '</p>';
-        if (delivery.orderNumber) html += '<p><strong>Pedido nº:</strong> ' + safe(delivery.orderNumber) + '</p>';
+        const type = delivery.type || 'consignacao';
+        
+        // --- 1. MONTANDO O COMPROVANTE DE ENTREGA ---
         const itemsList = delivery.items ? String(delivery.items).split('\n').filter(i => i.trim()) : [];
+        
+        let itemsHTML = '';
+        itemsList.forEach(item => {
+            const parts = item.split(/[-–]/).map(s => s.trim());
+            const qtd = parts.length > 1 ? parts[0] : '01';
+            const desc = parts.length > 1 ? parts[1] : parts[0];
+            itemsHTML += `<tr>
+                <td style="text-align:center;">-</td>
+                <td style="text-align:center;">01/01</td>
+                <td style="text-align:center;">${safe(qtd)}</td>
+                <td>${safe(desc)}</td>
+                <td style="text-align:center;">-</td>
+                <td></td>
+            </tr>`;
+        });
+
+        const dataEntrega = delivery.deliveryDate ? formatDateLocal(delivery.deliveryDate) : '-';
+
+        const htmlComprovante = `
+            <div class="comprovante-wrapper">
+                <div class="header-comp">
+                    <div class="logo">BRETON</div>
+                    <div class="title">COMPROVANTE DE ENTREGA</div>
+                    <div class="pedido-info">
+                        <strong>PEDIDO: ${safe(delivery.orderNumber)}</strong><br>
+                        Pag.: 1
+                    </div>
+                </div>
+
+                <table class="info-table">
+                    <tr>
+                        <td style="width: 50%;"><span class="label">Loja:</span> BELEM | HONG POSSAS</td>
+                        <td style="width: 25%;"><span class="label">Tipo de Pedido:</span> VENDA/MERCADORIA/CONSIGNAÇÃO</td>
+                        <td style="width: 25%;"><span class="label">Ord. Carregamento:</span> -</td>
+                    </tr>
+                    <tr>
+                        <td><span class="label">Cliente:</span> ${safe(delivery.client)}</td>
+                        <td><span class="label">Pedido Web:</span> -</td>
+                        <td><span class="label">Bairro:</span> -</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><span class="label">Endereço:</span> ${safe(delivery.address)}</td>
+                        <td><span class="label">Período Entrega:</span> ${delivery.deliveryTime ? safe(delivery.deliveryTime) : 'MANHÃ'}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"><span class="label">Data da Entrega:</span> ${safe(dataEntrega)}</td>
+                    </tr>
+                </table>
+
+                <table class="itens-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">Etiqueta</th>
+                            <th style="width: 10%;">Volumes</th>
+                            <th style="width: 10%;">Quantidade</th>
+                            <th style="width: 40%;">Descrição do Produto</th>
+                            <th style="width: 15%;">Dimensão</th>
+                            <th style="width: 10%;">Entregue (Sim/Não)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsHTML || '<tr><td colspan="6" style="text-align:center;">Nenhum item listado</td></tr>'}
+                    </tbody>
+                </table>
+
+                <div style="display: flex; justify-content: space-between; font-size: 8pt; font-weight: bold; margin-bottom: 10px;">
+                    <span>Total de Etiqueta: -</span>
+                    <span>Total de Volumes: -</span>
+                </div>
+
+                <div class="box-alerta">
+                    CASO OS PRODUTOS NÃO POSSAM SER MONTADOS NO ATO DA ENTREGA, SERÁ COBRADO R$ 500,00 POR TERMOS QUE NOS DESLOCAR NOVAMENTE.
+                </div>
+
+                <div class="checkboxes">
+                    <div>OS ENTREGADORES ESTIVERAM EM MINHA RESIDÊNCIA DAS <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> HS ÀS <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> HS.</div>
+                    <div style="margin-top: 3px;">USARAM: ( ) Luvas &nbsp; ( ) Sapatilhas &nbsp; ( ) Uniforme &nbsp; ( ) Ferramentas</div>
+                    <div style="margin-top: 6px;">OBS: Caso queira fazer algum comentário ou sugestão, relacione abaixo:</div>
+                    <div style="border-bottom: 1px solid #000; height: 15px;"></div>
+                    <div style="border-bottom: 1px solid #000; height: 15px;"></div>
+                </div>
+
+                <div class="assinatura-box">
+                    <p>Recebido por (nome em letra de forma): <span class="assinatura-line"></span></p>
+                    <p>Assinatura: <span class="assinatura-line"></span></p>
+                </div>
+
+                <div class="assinatura-box" style="margin-top: 15px;">
+                    <p style="margin-bottom: 4px;">Caso no ato da entrega seja devolvido algum produto, obrigatoriamente deverá ser relacionado abaixo:</p>
+                    <table class="itens-table" style="margin-bottom: 0;">
+                        <thead>
+                            <tr>
+                                <th style="width: 10%;">ITEM</th>
+                                <th style="width: 60%;">PRODUTO</th>
+                                <th style="width: 10%;">QTD</th>
+                                <th style="width: 20%;">MOTIVO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                            <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="small-text">
+                    Em caso de dúvidas ou reclamações, ligar (11) 4055-9707 para SP capital e grande SP. Para demais regiões 4003-1699 - Setor de Atendimento ao Cliente.<br>
+                    A BRETON OFERECE GARANTIA EM SEUS PRODUTOS A PARTIR DA DATA DE RECEBIMENTO.<br>
+                    Os móveis e/ou objetos de decoração acima listados, possuem garantia contra defeitos de fabricação/montagem, abrangendo suas peças, componentes e acessórios.<br>
+                    O MANUAL DO PROPRIETÁRIO CONTENDO INFORMAÇÕES TÉCNICAS DE CONSERVAÇÃO E LIMPEZA DOS PRODUTOS, BEM COMO OS TERMOS E PRAZOS DE GARANTIA, ENCONTRAM-SE NO WWW.BRETON.COM.BR
+                </div>
+            </div>
+            <div style="page-break-after: always;"></div>
+        `;
+
+        // --- 2. MONTANDO O TERMO ---
+        const titles = { consignacao: 'TERMO DE CONSIGNAÇÃO', retirada: 'TERMO DE RETIRADA', visita: 'TERMO DE VISITA TÉCNICA', emprestimo: 'TERMO DE EMPRÉSTIMO', montagem: 'TERMO DE ENTREGA E MONTAGEM' };
+        
+        let htmlTermo = '<div class="termo-print" style="display:block !important;"><div class="header">BRETON - HONG POSSAS</div><div class="content">';
+        htmlTermo += '<h2>' + safe(titles[type] || 'TERMO') + '</h2>';
+        htmlTermo += '<p><strong>Cliente:</strong> ' + safe(delivery.client) + '</p>';
+        htmlTermo += '<p><strong>Endereço:</strong> ' + safe(delivery.address) + '</p>';
+        if (delivery.orderNumber) htmlTermo += '<p><strong>Pedido nº:</strong> ' + safe(delivery.orderNumber) + '</p>';
+        
         if (type === 'consignacao' || type === 'emprestimo') {
-            html += '<p>Declaro haver recebido, a título de ' + (type === 'consignacao' ? 'consignação' : 'empréstimo') + ', os itens abaixo discriminados:</p>';
-            html += '<table class="items-table"><tr><th>Qtd</th><th>Item</th></tr>';
+            htmlTermo += '<p>Declaro haver recebido, a título de ' + (type === 'consignacao' ? 'consignação' : 'empréstimo') + ', os itens abaixo discriminados:</p>';
+            htmlTermo += '<table class="items-table"><tr><th>Qtd</th><th>Item</th></tr>';
             itemsList.forEach(item => {
                 const parts = item.split(/[-–]/).map(s => s.trim());
                 const qtd = parts.length > 1 ? parts[0] : '01';
                 const desc = parts.length > 1 ? parts[1] : parts[0];
-                html += '<tr><td>' + safe(qtd) + '</td><td>' + safe(desc) + '</td></tr>';
+                htmlTermo += '<tr><td>' + safe(qtd) + '</td><td>' + safe(desc) + '</td></tr>';
             });
-            html += '</table>';
-            html += '<p>Comprometo-me a efetuar a devolução destes móveis, dentro das condições abaixo:</p><ul><li>Os produtos descritos encontram-se em perfeito estado.</li><li>A mercadoria deverá ser devolvida em perfeita condição de uso e limpeza.</li><li>Qualquer dano à mercadoria será cobrado do solicitante.</li><li>As partes assinam o presente documento na presença de duas testemunhas.</li></ul>';
+            htmlTermo += '</table>';
+            htmlTermo += '<p>Comprometo-me a efetuar a devolução destes móveis, dentro das condições abaixo:</p><ul><li>Os produtos descritos encontram-se em perfeito estado.</li><li>A mercadoria deverá ser devolvida em perfeita condição de uso e limpeza.</li><li>Qualquer dano à mercadoria será cobrado do solicitante.</li><li>As partes assinam o presente documento na presença de duas testemunhas.</li></ul>';
         } else if (type === 'retirada') {
-            html += '<p>Declaro haver recebido a Equipe de Montagem da Breton Belém, para retirada dos itens abaixo:</p><ul>';
-            itemsList.forEach(item => html += '<li>' + safe(item) + '</li>');
-            html += '</ul>';
+            htmlTermo += '<p>Declaro haver recebido a Equipe de Montagem da Breton Belém, para retirada dos itens abaixo:</p><ul>';
+            itemsList.forEach(item => htmlTermo += '<li>' + safe(item) + '</li>');
+            htmlTermo += '</ul>';
         } else if (type === 'visita') {
-            html += '<p>Declaro haver recebido a Equipe de Entrega e Montagem da Breton Belém, para troca do item:</p><ul>';
-            itemsList.forEach(item => html += '<li>' + safe(item) + '</li>');
-            html += '</ul>';
+            htmlTermo += '<p>Declaro haver recebido a Equipe de Entrega e Montagem da Breton Belém, para troca do item:</p><ul>';
+            itemsList.forEach(item => htmlTermo += '<li>' + safe(item) + '</li>');
+            htmlTermo += '</ul>';
         } else if (type === 'montagem') {
-            html += '<p>Declaro haver recebido a Equipe de Entrega e Montagem da Breton Belém, para entrega e montagem dos itens abaixo, segundo o pedido ' + safe(delivery.orderNumber || '') + ':</p><ul>';
-            itemsList.forEach(item => html += '<li>' + safe(item) + '</li>');
-            html += '</ul>';
+            htmlTermo += '<p>Declaro haver recebido a Equipe de Entrega e Montagem da Breton Belém, para entrega e montagem dos itens abaixo, segundo o pedido ' + safe(delivery.orderNumber || '') + ':</p><ul>';
+            itemsList.forEach(item => htmlTermo += '<li>' + safe(item) + '</li>');
+            htmlTermo += '</ul>';
         }
         const dataStr = delivery.confirmDate ? formatDateTimeLocal(delivery.confirmDate) : (delivery.deliveryDate ? formatDateLocal(delivery.deliveryDate) : '___/___/____');
-        html += '<p style="margin-top:20px;"><strong>Belém-PA, ' + safe(dataStr) + '</strong></p>';
-        html += '<div class="signature"><div class="line"></div><p>' + safe(delivery.client) + '</p>' + (delivery.receivedBy ? '<p style="font-size:10pt;">Recebido por: ' + safe(delivery.receivedBy) + '</p>' : '') + '</div>';
-        html += '</div><div class="footer">End.: Trav. 14 de Março, 1100 - Umarizal | CEP. 66055-490 / Belém-PA</div></div>';
+        htmlTermo += '<p style="margin-top:20px;"><strong>Belém-PA, ' + safe(dataStr) + '</strong></p>';
+        htmlTermo += '<div class="signature"><div class="line"></div><p>' + safe(delivery.client) + '</p>' + (delivery.receivedBy ? '<p style="font-size:10pt;">Recebido por: ' + safe(delivery.receivedBy) + '</p>' : '') + '</div>';
+        htmlTermo += '</div><div class="footer">End.: Trav. 14 de Março, 1100 - Umarizal | CEP. 66055-490 / Belém-PA</div></div>';
+
+        // --- 3. JUNTANDO OS DOIS E IMPRIMINDO ---
         const container = document.getElementById('termoPrint');
-        container.innerHTML = html;
+        container.innerHTML = htmlComprovante + htmlTermo;
+        container.style.display = 'block';
+        
         document.body.classList.remove('printing-report');
-        setTimeout(() => window.print(), 100);
+        setTimeout(() => window.print(), 150);
     }
 
+    // ================================================================
+    //  PREVISÃO DE EMBARQUE
+    // ================================================================
     function gerarPrevisaoEmbarque(delivery) {
         if (!delivery.embarkDate && !delivery.arrivalDate) {
             if (!confirm('Esta entrega ainda não tem as datas de embarque e chegada cadastradas. Deseja editar agora?')) return;
@@ -1222,7 +1372,7 @@
         }
         const safe = escapeHtml;
         const itemsList = delivery.items ? String(delivery.items).split('\n').filter(i => i.trim()) : [];
-        let html = '<div class="termo-print"><div class="header">BRETON</div><div class="content">';
+        let html = '<div class="termo-print"><div class="header">BRETON - HONG POSSAS</div><div class="content">';
         html += '<h2>PREVISÃO DE EMBARQUE E CHEGADA EM BELÉM</h2>';
         html += '<p><strong>Belém-PA, ' + safe(new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })) + '</strong></p>';
         html += '<p><strong>Pedido nº:</strong> ' + safe(delivery.orderNumber || '') + '</p>';
@@ -1256,6 +1406,9 @@
         setTimeout(() => window.print(), 100);
     }
 
+    // ================================================================
+    //  CALENDÁRIO
+    // ================================================================
     function renderCalendar(year, month) {
         const grid = document.getElementById('calendarGrid');
         grid.innerHTML = '';
@@ -1340,6 +1493,9 @@
         document.getElementById('calMonthYear').textContent = new Date(year, month).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
     }
 
+    // ================================================================
+    //  DASHBOARD
+    // ================================================================
     let statusChartInstance, dailyChartInstance, responsibleChartInstance;
 
     function renderDashboard() {
@@ -1399,6 +1555,9 @@
         });
     }
 
+    // ================================================================
+    //  RELATÓRIO
+    // ================================================================
     function renderReport() {
         const respSelect = document.getElementById('filterResponsible');
         const currentVal = respSelect.value;
@@ -1496,6 +1655,9 @@
         if (termo) termo.innerHTML = '';
     });
 
+    // ================================================================
+    //  MODAL NOVA/EDIÇÃO
+    // ================================================================
     function openModalWithCoords(lat, lng) {
         document.getElementById('editId').value = '';
         document.getElementById('modalTitle').textContent = 'Nova Entrega';
@@ -1748,7 +1910,6 @@
 
     function iniciarSistema() {
         renderKanban();
-        registerColumnDropHandlers();
         if (originCoords) {
             document.getElementById('originInput').value = originAddress;
             atualizarStatusOrigem();
@@ -1784,7 +1945,7 @@
     document.getElementById('btnOptimizeRoute').addEventListener('click', optimizeRoute);
     document.getElementById('btnDayRoute').addEventListener('click', calcularRotaDoDia);
 
-    // BUSCA GLOBAL — listeners
+    // BUSCA GLOBAL
     document.getElementById('globalSearch').addEventListener('input', applySearch);
     document.getElementById('btnClearSearch').addEventListener('click', () => {
         document.getElementById('globalSearch').value = '';
@@ -1811,7 +1972,7 @@
             carregarDadosFallback();
         });
 
-    console.log('Sistema Hong Possas v3.3 carregado.');
+    console.log('Sistema Hong Possas v3.4 carregado.');
     </script>
 </body>
 </html>
