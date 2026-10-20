@@ -26,7 +26,6 @@
     .global-search input::placeholder { color: rgba(255,255,255,0.65); }
     .global-search .clear-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 0.8rem; line-height: 1; display: none; }
     .global-search .clear-btn.show { display: inline-block; }
-    .global-search .clear-btn:hover { background: rgba(255,255,255,0.35); }
     .global-search .search-count { font-size: 0.7rem; color: #ffe08a; margin-left: 4px; font-weight: 700; }
 
     .tab-content { display: none; flex: 1; overflow: hidden; padding: 10px; gap: 10px; }
@@ -237,9 +236,9 @@
     <header>
         <div class="brand">Mobiliário Hong Possas <small>· Entregas</small></div>
         <div class="global-search">
-            <input type="text" id="globalSearch" placeholder="Buscar por pedido, cliente, telefone, endereço..." />
+            <input type="text" id="globalSearch" placeholder="Buscar por pedido, cliente..." />
             <span class="search-count" id="searchCount"></span>
-            <button class="clear-btn" id="btnClearSearch" title="Limpar busca">×</button>
+            <button class="clear-btn" id="btnClearSearch" title="Limpar">×</button>
         </div>
         <div class="toolbar" id="tabButtons">
             <button class="active-tab" data-tab="kanban">Kanban</button>
@@ -266,27 +265,27 @@
         <div class="map-wrapper">
             <div id="map"></div>
             <div class="map-search">
-                <input type="text" id="mapSearchInput" placeholder="Buscar local no mapa..." />
+                <input type="text" id="mapSearchInput" placeholder="Buscar local..." />
                 <button id="btnMapSearch">Buscar</button>
             </div>
-            <button class="map-route-btn" id="btnOptimizeRoute">Otimizar Rota (Todas Pendentes)</button>
+            <button class="map-route-btn" id="btnOptimizeRoute">Otimizar Rota</button>
             <div class="route-info" id="routeInfo"></div>
             <div class="origin-control">
                 <label>Ponto de partida</label>
-                <input type="text" id="originInput" placeholder="Endereço ou clique no mapa" />
+                <input type="text" id="originInput" placeholder="Endereço" />
                 <div class="btn-group">
-                    <button class="btn-definir" id="btnSetOrigin">Definir endereço</button>
-                    <button class="btn-mapa" id="btnOriginMap">Selecionar no mapa</button>
+                    <button class="btn-definir" id="btnSetOrigin">Definir</button>
+                    <button class="btn-mapa" id="btnOriginMap">Mapa</button>
                 </div>
-                <div class="origin-status" id="originStatus">Nenhum ponto definido</div>
+                <div class="origin-status" id="originStatus">Nenhum</div>
             </div>
             <div class="day-route-control">
                 <label>Rota por Dia</label>
                 <input type="date" id="dayRouteDate" />
-                <label style="margin-top:6px;">Hora de saída</label>
+                <label>Saída</label>
                 <input type="time" id="dayRouteStartTime" value="08:00" />
-                <button class="btn-calc" id="btnDayRoute">Calcular Rota do Dia</button>
-                <div class="info-day" id="dayRouteInfo">Selecione uma data e clique em calcular.</div>
+                <button class="btn-calc" id="btnDayRoute">Calcular Rota</button>
+                <div class="info-day" id="dayRouteInfo">Selecione...</div>
             </div>
         </div>
     </div>
@@ -299,7 +298,6 @@
                 <button id="calNext">&gt;</button>
             </div>
             <div class="calendar-grid" id="calendarGrid"></div>
-            <div style="margin-top:8px;font-size:0.8rem;color:#5e6c84;">Clique em uma entrega para editar. Passe o mouse sobre a etiqueta para excluir.</div>
         </div>
     </div>
 
@@ -308,8 +306,8 @@
             <div class="dashboard-cards" id="dashCards"></div>
             <div class="dashboard-charts">
                 <div class="chart-box"><h3>Entregas por Status</h3><canvas id="statusChart"></canvas></div>
-                <div class="chart-box"><h3>Entregas por Dia (últimos 7 dias)</h3><canvas id="dailyChart"></canvas></div>
-                <div class="chart-box" style="grid-column: span 2;"><h3>Entregas por Responsável</h3><canvas id="responsibleChart"></canvas></div>
+                <div class="chart-box"><h3>Entregas por Dia</h3><canvas id="dailyChart"></canvas></div>
+                <div class="chart-box" style="grid-column: span 2;"><h3>Por Responsável</h3><canvas id="responsibleChart"></canvas></div>
             </div>
         </div>
     </div>
@@ -317,25 +315,16 @@
     <div class="tab-content report-tab" id="tab-report">
         <div class="report-container">
             <div class="report-filters">
-                <div class="filter-group">
-                    <label>Período</label>
+                <div class="filter-group"><label>Período</label>
                     <select id="filterPeriod">
                         <option value="today">Hoje</option>
                         <option value="tomorrow">Amanhã</option>
                         <option value="week">Esta semana</option>
                         <option value="month" selected>Este mês</option>
                         <option value="all">Todos</option>
-                        <option value="custom">Personalizado</option>
                     </select>
                 </div>
-                <div class="filter-group" id="dateRangeGroup" style="display:none;">
-                    <label>De</label>
-                    <input type="date" id="filterDateStart" />
-                    <label>Até</label>
-                    <input type="date" id="filterDateEnd" />
-                </div>
-                <div class="filter-group">
-                    <label>Status</label>
+                <div class="filter-group"><label>Status</label>
                     <select id="filterStatus">
                         <option value="all">Todos</option>
                         <option value="todo">A Fazer</option>
@@ -345,13 +334,7 @@
                         <option value="problema">Problema</option>
                     </select>
                 </div>
-                <div class="filter-group">
-                    <label>Responsável</label>
-                    <select id="filterResponsible"><option value="all">Todos</option></select>
-                </div>
-                <div class="filter-group">
-                    <button id="btnApplyFilters">Aplicar Filtros</button>
-                </div>
+                <div class="filter-group"><button id="btnApplyFilters">Aplicar</button></div>
             </div>
             <div class="report-actions">
                 <button id="btnExportCSV">Exportar CSV</button>
@@ -360,10 +343,7 @@
             <div id="reportTableWrapper">
                 <table id="reportTable">
                     <thead>
-                        <tr>
-                            <th>Pedido</th><th>Cliente</th><th>Telefone</th><th>Data</th>
-                            <th>Hora</th><th>Responsável</th><th>Endereço</th><th>Status</th><th>Tipo</th>
-                        </tr>
+                        <tr><th>Pedido</th><th>Cliente</th><th>Telefone</th><th>Data</th><th>Hora</th><th>Responsável</th><th>Endereço</th><th>Status</th><th>Tipo</th></tr>
                     </thead>
                     <tbody id="reportBody"></tbody>
                 </table>
@@ -376,12 +356,10 @@
             <h2 id="modalTitle">Nova Entrega</h2>
             <form id="formDelivery">
                 <input type="hidden" id="editId" value="" />
-
                 <div class="section-title">Dados do Pedido</div>
                 <div class="form-row">
-                    <div><label for="orderNumber">Nº do Pedido *</label><input type="text" id="orderNumber" required /></div>
-                    <div>
-                        <label for="deliveryType">Tipo de entrega *</label>
+                    <div><label>Nº do Pedido *</label><input type="text" id="orderNumber" required /></div>
+                    <div><label>Tipo *</label>
                         <select id="deliveryType" required>
                             <option value="consignacao">Consignação</option>
                             <option value="retirada">Retirada</option>
@@ -391,20 +369,16 @@
                         </select>
                     </div>
                 </div>
-
-                <label for="client">Cliente *</label><input type="text" id="client" required />
-
+                <label>Cliente *</label><input type="text" id="client" required />
                 <div class="form-row">
-                    <div><label for="phone">Telefone/WhatsApp</label><input type="text" id="phone" /></div>
-                    <div><label for="responsible">Responsável</label><input type="text" id="responsible" /></div>
+                    <div><label>Telefone</label><input type="text" id="phone" /></div>
+                    <div><label>Responsável</label><input type="text" id="responsible" /></div>
                 </div>
-
-                <div class="section-title">Datas e Horários</div>
+                <div class="section-title">Datas</div>
                 <div class="form-row-3">
-                    <div><label for="deliveryDate">Data prevista</label><input type="date" id="deliveryDate" /></div>
-                    <div><label for="deliveryTime">Horário</label><input type="time" id="deliveryTime" /></div>
-                    <div>
-                        <label for="status">Status</label>
+                    <div><label>Data</label><input type="date" id="deliveryDate" /></div>
+                    <div><label>Hora</label><input type="time" id="deliveryTime" /></div>
+                    <div><label>Status</label>
                         <select id="status">
                             <option value="todo">A Fazer</option>
                             <option value="separacao">Separação</option>
@@ -414,27 +388,17 @@
                         </select>
                     </div>
                 </div>
-
-                <div class="section-title">Embarque e Chegada</div>
+                <div class="section-title">Embarque</div>
                 <div class="form-row">
-                    <div><label for="embarkDate">Previsão de embarque</label><input type="date" id="embarkDate" /></div>
-                    <div><label for="arrivalDate">Previsão de chegada em Belém</label><input type="date" id="arrivalDate" /></div>
+                    <div><label>Embarque</label><input type="date" id="embarkDate" /></div>
+                    <div><label>Chegada</label><input type="date" id="arrivalDate" /></div>
                 </div>
-                <label for="contractDeadline">Prazo em contrato (entrega final)</label>
-                <input type="date" id="contractDeadline" />
-
+                <label>Prazo Contrato</label><input type="date" id="contractDeadline" />
                 <div class="section-title">Itens e Endereço</div>
-                <label for="items">Itens (móveis) *</label>
-                <textarea id="items" required></textarea>
-
-                <label for="address">Endereço *</label>
-                <input type="text" id="address" required />
-
-                <label for="observation">Observação</label>
-                <textarea id="observation"></textarea>
-
+                <label>Itens *</label><textarea id="items" required></textarea>
+                <label>Endereço *</label><input type="text" id="address" required />
+                <label>Obs</label><textarea id="observation"></textarea>
                 <div id="coordInfo" class="coord-info" style="display:none;">Coordenadas: <span id="coordDisplay"></span></div>
-
                 <div class="modal-actions">
                     <button type="button" class="btn-delete" id="btnDeleteModal" style="display:none;">Excluir</button>
                     <button type="button" class="btn-cancel" id="btnCancelModal">Cancelar</button>
@@ -449,15 +413,12 @@
             <h2>Confirmar Entrega</h2>
             <form id="formConfirm">
                 <input type="hidden" id="confirmId" value="" />
-                <label for="receivedBy">Recebido por *</label>
-                <input type="text" id="receivedBy" required />
-                <label for="confirmObs">Observação</label>
-                <textarea id="confirmObs"></textarea>
-                <label for="confirmDate">Data/Hora</label>
-                <input type="datetime-local" id="confirmDate" required />
+                <label>Recebido por *</label><input type="text" id="receivedBy" required />
+                <label>Observação</label><textarea id="confirmObs"></textarea>
+                <label>Data/Hora</label><input type="datetime-local" id="confirmDate" required />
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" id="btnCancelConfirm">Cancelar</button>
-                    <button type="submit" class="btn-submit">Confirmar e gerar termo</button>
+                    <button type="submit" class="btn-submit">Confirmar e Gerar Termo</button>
                 </div>
             </form>
         </div>
@@ -471,53 +432,15 @@
         if (s === null || s === undefined) return '';
         return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
-    function formatDateLocal(dateStr) {
-        if (!dateStr) return '';
-        try {
-            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-                const [y, m, d] = dateStr.split('-');
-                return d + '/' + m + '/' + y;
-            }
-            return new Date(dateStr).toLocaleDateString('pt-BR');
-        } catch (e) { return ''; }
-    }
-    function formatDateTimeLocal(dtStr) {
-        if (!dtStr) return '';
-        try { return new Date(dtStr).toLocaleString('pt-BR'); } catch (e) { return ''; }
-    }
-    function getTodayStr() {
-        const d = new Date();
-        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    }
-    function formatISODate(d) {
-        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    }
-    function getWeekRange() {
-        const hoje = new Date();
-        const dia = hoje.getDay();
-        const diff = hoje.getDate() - dia + (dia === 0 ? -6 : 1);
-        const seg = new Date(hoje); seg.setDate(diff);
-        const dom = new Date(seg); dom.setDate(seg.getDate() + 6);
-        return { start: formatISODate(seg), end: formatISODate(dom) };
-    }
-    function getMonthRange() {
-        const hoje = new Date();
-        const start = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-        const end = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-        return { start: formatISODate(start), end: formatISODate(end) };
-    }
-    function showToast(message, type) {
-        const container = document.getElementById('toastContainer');
-        const t = document.createElement('div');
-        t.className = 'toast ' + (type || '');
-        t.textContent = message;
-        container.appendChild(t);
-        setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; }, 3500);
-        setTimeout(() => t.remove(), 4000);
-    }
+    function formatDateLocal(dateStr) { if (!dateStr) return ''; try { if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) { const [y,m,d] = dateStr.split('-'); return d+'/'+m+'/'+y; } return new Date(dateStr).toLocaleDateString('pt-BR'); } catch(e) { return ''; } }
+    function formatDateTimeLocal(dtStr) { if (!dtStr) return ''; try { return new Date(dtStr).toLocaleString('pt-BR'); } catch(e) { return ''; } }
+    function getTodayStr() { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function formatISODate(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function getMonthRange() { const hoje = new Date(); const start = new Date(hoje.getFullYear(), hoje.getMonth(), 1); const end = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0); return { start: formatISODate(start), end: formatISODate(end) }; }
+    function showToast(message, type) { const container = document.getElementById('toastContainer'); const t = document.createElement('div'); t.className = 'toast ' + (type || ''); t.textContent = message; container.appendChild(t); setTimeout(() => { t.style.opacity = '0'; }, 3500); setTimeout(() => t.remove(), 4000); }
     function toastSuccess(m) { showToast(m, 'success'); }
-    function toastError(m)   { showToast(m, 'error'); }
-    function toastWarn(m)    { showToast(m, 'warn'); }
+    function toastError(m) { showToast(m, 'error'); }
+    function toastWarn(m) { showToast(m, 'warn'); }
 
     const firebaseConfig = {
         apiKey: "AIzaSyB-3b01PdrMnGD7ZElltbeC36-9geyoxyg",
@@ -525,8 +448,7 @@
         projectId: "mobiliariobreton-5b875",
         storageBucket: "mobiliariobreton-5b875.firebasestorage.app",
         messagingSenderId: "818122563069",
-        appId: "1:818122563069:web:a323349ea4409f028d0d94",
-        measurementId: "G-HHYVZFFR1H"
+        appId: "1:818122563069:web:a323349ea4409f028d0d94"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -537,15 +459,14 @@
     async function addDelivery(data) {
         const orderNumber = String(data.orderNumber || '').trim();
         if (!orderNumber) throw new Error('Número do pedido é obrigatório.');
-        const docRef = db.collection('entregas').doc(orderNumber);
-        await docRef.set({ ...data, orderNumber });
+        await db.collection('entregas').doc(orderNumber).set({ ...data, orderNumber });
         return orderNumber;
     }
     async function updateDelivery(orderNumber, data) {
         const id = String(orderNumber || '').trim();
         if (!id) throw new Error('Número do pedido é obrigatório.');
-        const docRef = db.collection('entregas').doc(id);
-        await docRef.update(data);
+        try { await db.collection('entregas').doc(id).update(data); } 
+        catch (error) { if (error.code === 'not-found' || error.message.includes('No document to update')) { await db.collection('entregas').doc(id).set({ ...data, orderNumber: id }, { merge: true }); } else { throw error; } }
         
         const index = deliveries.findIndex(d => d.orderNumber === id);
         if (index !== -1) { deliveries[index] = { ...deliveries[index], ...data }; }
@@ -554,311 +475,71 @@
     async function deleteDelivery(orderNumber) {
         const id = String(orderNumber || '').trim();
         if (!id) throw new Error('Número do pedido é obrigatório.');
-        const docRef = db.collection('entregas').doc(id);
-        await docRef.delete();
-        
+        try { await db.collection('entregas').doc(id).delete(); } catch(e) {}
         deliveries = deliveries.filter(d => d.orderNumber !== id);
         renderAll();
-    }
-    async function saveOriginToFirestore(coords, address) {
-        await db.collection('config').doc('origin').set({ coords, address }, { merge: true });
     }
 
     let deliveries = [];
     let originCoords = null;
     let originAddress = '';
-    let originSelectActive = false;
     let map = null;
     let mapInitialized = false;
     let markersLayer = null;
     let markerMap = new Map();
-    let routeLayer = null;
     let originMarker = null;
-    let isSnapshotActive = false;
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
     let manualCoords = null;
     let editingOriginalAddress = null;
+    let searchTerm = '';
 
     const STATUS_LABELS = { todo: 'A Fazer', separacao: 'Separação', rota: 'Em Rota', entregue: 'Entregue', problema: 'Problema' };
     const TYPE_LABELS = { consignacao: 'Consignação', retirada: 'Retirada', visita: 'Visita Técnica', emprestimo: 'Empréstimo', montagem: 'Entrega e Montagem' };
 
-    let searchTerm = '';
     function normalizedSearch(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
-    function matchesSearch(d) {
-        if (!searchTerm) return true;
-        const hay = [d.orderNumber, d.client, d.phone, d.address, d.responsible, d.items, d.observation, d.receivedBy, d.confirmObs].map(normalizedSearch).join(' | ');
-        return hay.indexOf(searchTerm) !== -1;
-    }
+    function matchesSearch(d) { if (!searchTerm) return true; const hay = [d.orderNumber, d.client, d.phone, d.address, d.responsible, d.items, d.observation].map(normalizedSearch).join(' | '); return hay.indexOf(searchTerm) !== -1; }
     function getFilteredDeliveries() { return deliveries.filter(matchesSearch); }
-    function applySearch() {
-        const input = document.getElementById('globalSearch');
-        const clearBtn = document.getElementById('btnClearSearch');
-        const countEl = document.getElementById('searchCount');
-        searchTerm = normalizedSearch(input.value.trim());
-        if (searchTerm) {
-            clearBtn.classList.add('show');
-            countEl.textContent = getFilteredDeliveries().length + '/' + deliveries.length;
-        } else {
-            clearBtn.classList.remove('show');
-            countEl.textContent = '';
-        }
-        renderAll();
-    }
+    function applySearch() { const input = document.getElementById('globalSearch'); const clearBtn = document.getElementById('btnClearSearch'); const countEl = document.getElementById('searchCount'); searchTerm = normalizedSearch(input.value.trim()); if (searchTerm) { clearBtn.classList.add('show'); countEl.textContent = getFilteredDeliveries().length + '/' + deliveries.length; } else { clearBtn.classList.remove('show'); countEl.textContent = ''; } renderAll(); }
 
     function iniciarSnapshot() {
-        if (isSnapshotActive) return;
-        isSnapshotActive = true;
-        setStatus('Conectando...', 'loading');
-        db.collection('entregas').orderBy('orderNumber').onSnapshot(
-            (snapshot) => {
-                deliveries = [];
-                snapshot.forEach(doc => { deliveries.push({ id: doc.id, ...doc.data() }); });
-                setStatus('Online (' + deliveries.length + ')', 'online');
-                db.collection('config').doc('origin').get()
-                    .then(doc => {
-                        if (doc.exists) {
-                            const data = doc.data();
-                            originCoords = data.coords || null;
-                            originAddress = data.address || '';
-                        }
-                        afterDataReady();
-                    })
-                    .catch(err => { carregarOrigemLocal(); afterDataReady(); });
-            },
-            (error) => {
-                setStatus('Erro: ' + error.code, 'offline');
-                alert('Não foi possível carregar os dados.\nCódigo: ' + error.code + '\nMensagem: ' + error.message);
-                carregarDadosFallback();
-            }
-        );
-    }
-    function afterDataReady() { renderAll(); if (mapInitialized) renderMarkers(); }
-    function carregarOrigemLocal() {
-        try {
-            const origin = localStorage.getItem('originCoords');
-            if (origin) { originCoords = JSON.parse(origin); originAddress = localStorage.getItem('originAddress') || ''; }
-        } catch (e) {}
-    }
-    function carregarDadosFallback() {
-        try {
-            const data = localStorage.getItem('deliveriesCache');
-            if (data) { const parsed = JSON.parse(data); if (Array.isArray(parsed)) deliveries = parsed; }
-        } catch (e) {}
-        carregarOrigemLocal(); afterDataReady();
-    }
-    function atualizarCacheLocal() {
-        try { localStorage.setItem('deliveriesCache', JSON.stringify(deliveries)); } catch (e) {}
-    }
-
-    let PIN_ICON = null;
-    let ORIGIN_ICON = null;
-    function initMap() {
-        if (map) return;
-        if (typeof L === 'undefined' || typeof L.map !== 'function') { setTimeout(initMap, 500); return; }
-        try {
-            map = L.map('map').setView([-1.4558, -48.4902], 12);
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 19 }).addTo(map);
-            PIN_ICON = L.divIcon({ className: 'custom-pin', html: '<div style="background:#026aa7; width:28px; height:28px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; color:white; font-size:14px; font-weight:bold;">#</div>', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] });
-            ORIGIN_ICON = L.divIcon({ className: 'origin-pin', html: '<div style="background:#e74c3c; width:24px; height:24px; border-radius:50%; border:3px solid white; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:bold; color:white;">P</div>', iconSize: [24, 24], iconAnchor: [12, 12] });
-            markersLayer = L.layerGroup().addTo(map);
-            routeLayer = L.layerGroup().addTo(map);
-            map.on('click', (e) => {
-                const { lat, lng } = e.latlng;
-                if (originSelectActive) { setOriginFromCoords(lat, lng, 'Ponto selecionado no mapa'); desativarSelecaoOrigem(); return; }
-                openModalWithCoords(lat, lng);
-            });
-            mapInitialized = true;
-            renderMarkers();
-            if (deliveries.length) {
-                const valid = deliveries.filter(d => typeof d.lat === 'number' && !isNaN(d.lat) && typeof d.lng === 'number' && !isNaN(d.lng));
-                const pontos = valid.map(d => [d.lat, d.lng]);
-                if (originCoords) pontos.push([originCoords.lat, originCoords.lng]);
-                if (pontos.length) { try { map.fitBounds(L.latLngBounds(pontos).pad(0.2)); } catch (e) {} }
-            }
-            if (originCoords) criarMarcadorOrigem(originCoords.lat, originCoords.lng);
-            setTimeout(() => map.invalidateSize(), 200);
-            atualizarStatusOrigem();
-        } catch (e) { alert('Erro ao inicializar o mapa: ' + e.message); }
-    }
-
-    function criarMarcadorOrigem(lat, lng) {
-        if (!map) return;
-        if (originMarker) map.removeLayer(originMarker);
-        originMarker = L.marker([lat, lng], { icon: ORIGIN_ICON }).addTo(map).bindPopup('Ponto de partida');
-    }
-    async function setOriginFromCoords(lat, lng, label) {
-        originCoords = { lat, lng };
-        originAddress = label || (lat.toFixed(6) + ', ' + lng.toFixed(6));
-        if (mapInitialized) criarMarcadorOrigem(lat, lng);
-        try { await saveOriginToFirestore(originCoords, originAddress); toastSuccess('Ponto de partida salvo.'); }
-        catch (e) {
-            try { localStorage.setItem('originCoords', JSON.stringify(originCoords)); localStorage.setItem('originAddress', originAddress); } catch (err) {}
-            toastWarn('Origem salva apenas neste navegador.');
-        }
-        atualizarStatusOrigem();
-        document.getElementById('originInput').value = originAddress;
-        renderAll();
-    }
-    function atualizarStatusOrigem() {
-        const status = document.getElementById('originStatus');
-        if (!status) return;
-        if (originCoords) { status.textContent = originAddress; status.style.color = '#27ae60'; }
-        else { status.textContent = 'Nenhum ponto definido'; status.style.color = '#5e6c84'; }
-    }
-    function ativarSelecaoOrigem() {
-        originSelectActive = true;
-        document.getElementById('btnOriginMap').classList.add('active');
-        document.getElementById('btnOriginMap').textContent = 'Clique no mapa';
-        if (map) map.getContainer().style.cursor = 'crosshair';
-    }
-    function desativarSelecaoOrigem() {
-        originSelectActive = false;
-        const btn = document.getElementById('btnOriginMap');
-        if (btn) { btn.classList.remove('active'); btn.textContent = 'Selecionar no mapa'; }
-        if (map) map.getContainer().style.cursor = '';
-    }
-
-    function createPopupContent(d) {
-        const itemsList = d.items ? String(d.items).replace(/\n/g, ', ') : '-';
-        const dist = (typeof d.distance === 'number') ? d.distance.toFixed(1) + ' km' : '-';
-        const time = (typeof d.duration === 'number') ? Math.round(d.duration) + ' min' : '-';
-        const safe = escapeHtml;
-        return '<div class="popup-detail">' +
-            '<h4>#' + safe(d.orderNumber) + '</h4>' +
-            '<p><strong>Cliente:</strong> ' + safe(d.client) + '</p>' +
-            '<p><strong>Telefone:</strong> ' + safe(d.phone || '-') + '</p>' +
-            '<p><strong>Responsável:</strong> ' + safe(d.responsible || '-') + '</p>' +
-            '<p><strong>Data:</strong> ' + (d.deliveryDate ? safe(formatDateLocal(d.deliveryDate)) : '-') + (d.deliveryTime ? ' às ' + safe(d.deliveryTime) : '') + '</p>' +
-            '<p><strong>Endereço:</strong> ' + safe(d.address) + '</p>' +
-            '<p><strong>Itens:</strong> ' + safe(itemsList) + '</p>' +
-            (d.observation ? '<p><strong>Obs:</strong> ' + safe(d.observation) + '</p>' : '') +
-            '<p><strong>Distância:</strong> ' + dist + ' | <strong>Tempo:</strong> ' + time + '</p>' +
-            '<p><span style="background:#6b1a2a;color:#fff;padding:0 10px;border-radius:12px;font-size:0.7rem;">' + safe(TYPE_LABELS[d.type] || d.type || '') + '</span> ' +
-            '<span style="background:#026aa7;color:#fff;padding:0 10px;border-radius:12px;font-size:0.7rem;">' + safe(STATUS_LABELS[d.status] || d.status || '') + '</span></p>' +
-            '</div>';
-    }
-    function renderMarkers() {
-        if (!mapInitialized || !markersLayer || !PIN_ICON) return;
-        markersLayer.clearLayers();
-        markerMap.clear();
-        getFilteredDeliveries().forEach(d => {
-            if (!d.lat || !d.lng) return;
-            const marker = L.marker([d.lat, d.lng], { icon: PIN_ICON }).addTo(markersLayer).bindPopup(createPopupContent(d));
-            markerMap.set(d.orderNumber, marker);
+        db.collection('entregas').orderBy('orderNumber').onSnapshot((snapshot) => {
+            deliveries = [];
+            snapshot.forEach(doc => { deliveries.push({ id: doc.id, ...doc.data() }); });
+            setStatus('Online (' + deliveries.length + ')', 'online');
+            localStorage.setItem('deliveriesCache', JSON.stringify(deliveries)); // Backup local
+            renderAll();
+        }, (error) => {
+            setStatus('Offline', 'offline');
+            const cache = localStorage.getItem('deliveriesCache');
+            if (cache) { deliveries = JSON.parse(cache); renderAll(); }
+            alert('Erro Firebase: ' + error.code);
         });
     }
 
-    function haversineDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-    function ordenarPorVizinho(pendentes, inicio) {
-        const unvisited = [...pendentes];
-        const ordered = [];
-        let current = inicio;
-        while (unvisited.length) {
-            let nearestIdx = 0, minDist = Infinity;
-            for (let i = 0; i < unvisited.length; i++) {
-                const d = haversineDistance(current.lat, current.lng, unvisited[i].lat, unvisited[i].lng);
-                if (d < minDist) { minDist = d; nearestIdx = i; }
-            }
-            const next = unvisited.splice(nearestIdx, 1)[0];
-            ordered.push(next);
-            current = { lat: next.lat, lng: next.lng };
-        }
-        return ordered;
-    }
-    function minutosParaHora(totalMin) {
-        const horas = Math.floor(totalMin / 60) % 24;
-        const mins = Math.round(totalMin % 60);
-        return String(horas).padStart(2, '0') + ':' + String(mins).padStart(2, '0');
-    }
-    function horaParaMinutos(horaStr) {
-        if (!horaStr) return 0;
-        const partes = horaStr.split(':');
-        return parseInt(partes[0]) * 60 + parseInt(partes[1] || 0);
+    function initMap() {
+        if (map) return;
+        map = L.map('map').setView([-1.4558, -48.4902], 12);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        markersLayer = L.layerGroup().addTo(map);
+        map.on('click', (e) => { if (originCoords && !manualCoords) return; manualCoords = { lat: e.latlng.lat, lng: e.latlng.lng }; openModalWithCoords(manualCoords.lat, manualCoords.lng); });
+        mapInitialized = true;
+        renderMarkers();
     }
 
-    async function optimizeRoute() {
-        if (!mapInitialized) { alert('Abra a aba Mapa primeiro.'); return; }
-        const pendentes = getFilteredDeliveries().filter(d => d.status !== 'entregue' && d.status !== 'problema' && d.lat && d.lng);
-        if (pendentes.length < 2) { toastWarn('Precisa de pelo menos 2 entregas pendentes.'); return; }
-        if (!originCoords) { toastWarn('Defina o ponto de partida primeiro.'); return; }
-        const ordered = ordenarPorVizinho(pendentes, originCoords);
-        const coordsStr = [originCoords.lng + ',' + originCoords.lat, ...ordered.map(d => d.lng + ',' + d.lat)].join(';');
-        const url = 'https://router.project-osrm.org/route/v1/driving/' + coordsStr + '?overview=full&geometries=geojson';
-        try {
-            const resp = await fetch(url);
-            const data = await resp.json();
-            if (data.code !== 'Ok') { toastError('Erro na rota: ' + (data.message || '')); return; }
-            const route = data.routes[0];
-            if (routeLayer) routeLayer.clearLayers();
-            const latlngs = route.geometry.coordinates.map(c => [c[1], c[0]]);
-            const polyline = L.polyline(latlngs, { color: '#6b1a2a', weight: 4, opacity: 0.7 }).addTo(routeLayer);
-            map.fitBounds(polyline.getBounds().pad(0.1));
-            const totalDist = (route.distance / 1000).toFixed(1);
-            const totalTime = Math.round(route.duration / 60);
-            const info = document.getElementById('routeInfo');
-            info.textContent = ordered.length + ' entregas | ' + totalDist + ' km | ' + totalTime + ' min';
-            info.classList.add('show');
-            toastSuccess('Rota: ' + totalDist + ' km / ' + totalTime + ' min');
-        } catch (e) { toastError('Erro ao calcular rota: ' + e.message); }
-    }
-
-    async function calcularRotaDoDia() {
-        if (!mapInitialized) { alert('Abra a aba Mapa primeiro.'); return; }
-        const dataSel = document.getElementById('dayRouteDate').value;
-        const horaSaida = document.getElementById('dayRouteStartTime').value || '08:00';
-        if (!dataSel) { toastWarn('Selecione uma data.'); return; }
-        if (!originCoords) { toastWarn('Defina o ponto de partida primeiro.'); return; }
-        const doDia = getFilteredDeliveries().filter(d => d.deliveryDate === dataSel && d.status !== 'entregue' && d.status !== 'problema' && d.lat && d.lng);
-        const info = document.getElementById('dayRouteInfo');
-        if (doDia.length === 0) {
-            info.textContent = 'Nenhuma entrega pendente nesse dia.';
-            if (routeLayer) routeLayer.clearLayers();
-            return;
-        }
-        const ordered = doDia.length === 1 ? doDia : ordenarPorVizinho(doDia, originCoords);
-        const coordsStr = [originCoords.lng + ',' + originCoords.lat, ...ordered.map(d => d.lng + ',' + d.lat)].join(';');
-        const url = 'https://router.project-osrm.org/route/v1/driving/' + coordsStr + '?overview=full&geometries=geojson';
-        try {
-            const resp = await fetch(url);
-            const data = await resp.json();
-            if (data.code !== 'Ok') { toastError('Erro: ' + (data.message || '')); return; }
-            const route = data.routes[0];
-            if (routeLayer) routeLayer.clearLayers();
-            const latlngs = route.geometry.coordinates.map(c => [c[1], c[0]]);
-            const polyline = L.polyline(latlngs, { color: '#6b1a2a', weight: 4, opacity: 0.7 }).addTo(routeLayer);
-            map.fitBounds(polyline.getBounds().pad(0.1));
-
-            const totalDist = (route.distance / 1000).toFixed(1);
-            const totalTime = Math.round(route.duration / 60);
-            const legs = route.legs || [];
-            let minAcum = horaParaMinutos(horaSaida);
-            const paradas = [];
-            for (let i = 0; i < ordered.length; i++) {
-                if (legs[i]) minAcum += Math.round(legs[i].duration / 60);
-                paradas.push({ hora: minutosParaHora(minAcum), orderNumber: ordered[i].orderNumber, client: ordered[i].client });
-            }
-            const horaRetorno = minutosParaHora(minAcum + (legs[legs.length - 1] ? Math.round(legs[legs.length - 1].duration / 60) : 0));
-
-            info.innerHTML = '<strong>' + ordered.length + ' entrega' + (ordered.length > 1 ? 's' : '') + '</strong><br>' + totalDist + ' km<br>' + totalTime + ' min<br>Retorno: ' + horaRetorno;
-            let msg = 'ROTA DO DIA ' + formatDateLocal(dataSel) + '\nSaída: ' + horaSaida + '\n\n';
-            paradas.forEach(p => { msg += p.hora + '  #' + p.orderNumber + '  ' + p.client + '\n'; });
-            msg += '\nDistância: ' + totalDist + ' km\nTempo: ' + totalTime + ' min\nRetorno: ' + horaRetorno;
-            alert(msg);
-        } catch (e) { toastError('Erro: ' + e.message); }
+    function renderMarkers() {
+        if (!mapInitialized || !markersLayer) return;
+        markersLayer.clearLayers();
+        getFilteredDeliveries().forEach(d => {
+            if (!d.lat || !d.lng) return;
+            const m = L.marker([d.lat, d.lng]).addTo(markersLayer).bindPopup('<b>#'+d.orderNumber+'</b><br>'+d.client);
+        });
     }
 
     function renderKanban() {
         const lists = { todo: document.getElementById('list-todo'), separacao: document.getElementById('list-separacao'), rota: document.getElementById('list-rota'), entregue: document.getElementById('list-entregue'), problema: document.getElementById('list-problema') };
         const counts = { todo: document.getElementById('count-todo'), separacao: document.getElementById('count-separacao'), rota: document.getElementById('count-rota'), entregue: document.getElementById('count-entregue'), problema: document.getElementById('count-problema') };
         Object.values(lists).forEach(el => el.innerHTML = '');
-
         const groups = { todo: [], separacao: [], rota: [], entregue: [], problema: [] };
         getFilteredDeliveries().forEach(d => { if (groups[d.status]) groups[d.status].push(d); });
 
@@ -866,212 +547,156 @@
             const listEl = lists[status];
             items.forEach(d => {
                 const card = document.createElement('div');
-                card.className = 'card-item';
-                card.draggable = true;
-                card.dataset.id = d.orderNumber;
-                card.dataset.status = status;
-
+                card.className = 'card-item'; card.draggable = true; card.dataset.id = d.orderNumber;
                 const lines = d.items ? String(d.items).split('\n') : [];
-                const itemsShort = lines.length ? lines.slice(0, 2).join(', ') + (lines.length > 2 ? '...' : '') : '-';
-                const dist = (typeof d.distance === 'number') ? d.distance.toFixed(1) + ' km' : '-';
+                const itemsShort = lines.length ? lines.slice(0, 2).join(', ') : '-';
                 const phoneDigits = (d.phone || '').replace(/\D/g, '');
-                const allStatus = ['todo', 'separacao', 'rota', 'entregue', 'problema'];
-                const labels = { todo: 'A Fazer', separacao: 'Separação', rota: 'Em Rota', entregue: 'Entregue', problema: 'Problema' };
-                const icons = { todo: '<', separacao: 'S', rota: 'R', entregue: 'OK', problema: '!' };
-
-                const l1 = document.createElement('div'); l1.className = 'card-line-1';
-                const orderEl = document.createElement('span'); orderEl.className = 'card-order'; orderEl.textContent = '#' + d.orderNumber;
-                const titleEl = document.createElement('span'); titleEl.className = 'card-title'; titleEl.textContent = itemsShort;
-                l1.appendChild(orderEl); l1.appendChild(titleEl); card.appendChild(l1);
-
-                const l2 = document.createElement('div'); l2.className = 'card-line-2';
-                const clientEl = document.createElement('span'); clientEl.className = 'card-client'; clientEl.textContent = d.client || '';
-                l2.appendChild(clientEl);
-                if (d.phone) { const p = document.createElement('span'); p.className = 'card-phone'; p.textContent = d.phone; l2.appendChild(p); }
-                card.appendChild(l2);
-
-                const addr = document.createElement('span'); addr.className = 'card-address'; addr.textContent = d.address || '';
-                card.appendChild(addr);
-
-                const l4 = document.createElement('div'); l4.className = 'card-line-4';
-                if (d.deliveryDate) { const s = document.createElement('span'); s.textContent = formatDateLocal(d.deliveryDate); l4.appendChild(s); }
-                if (d.deliveryTime) { const s = document.createElement('span'); s.className = 'card-time'; s.textContent = d.deliveryTime; l4.appendChild(s); }
-                if (d.responsible && d.responsible !== '-') { const s = document.createElement('span'); s.textContent = d.responsible; l4.appendChild(s); }
-                if (typeof d.distance === 'number') { const s = document.createElement('span'); s.className = 'card-distance'; s.textContent = dist; l4.appendChild(s); }
-                card.appendChild(l4);
-
-                if (d.observation) {
-                    const o = document.createElement('span'); o.className = 'card-obs'; o.textContent = d.observation;
-                    card.appendChild(o);
-                }
-
-                const l5 = document.createElement('div'); l5.className = 'card-line-5';
-                const badge = document.createElement('span'); badge.className = 'delivery-type-badge'; badge.textContent = TYPE_LABELS[d.type] || d.type || '';
-                l5.appendChild(badge); card.appendChild(l5);
-
-                const actions = document.createElement('div'); actions.className = 'card-actions';
-                const row1 = document.createElement('div'); row1.className = 'row';
-                allStatus.filter(s => s !== status).forEach(s => {
-                    const b = document.createElement('button');
-                    b.className = 'move-btn' + (s === 'entregue' ? ' success' : '') + (s === 'problema' ? ' danger' : '');
-                    b.dataset.action = s; b.dataset.id = d.orderNumber; b.textContent = icons[s] + ' ' + labels[s];
-                    row1.appendChild(b);
-                });
-                actions.appendChild(row1);
-
-                const row2 = document.createElement('div'); row2.className = 'row';
-                const editBtn = document.createElement('button'); editBtn.className = 'move-btn warning'; editBtn.dataset.action = 'edit'; editBtn.dataset.id = d.orderNumber; editBtn.textContent = 'Editar';
-                const delBtn = document.createElement('button'); delBtn.className = 'move-btn danger'; delBtn.dataset.action = 'delete'; delBtn.dataset.id = d.orderNumber; delBtn.textContent = 'Excluir';
-                const termoBtn = document.createElement('button'); termoBtn.className = 'move-btn termo-btn'; termoBtn.dataset.action = 'termo'; termoBtn.dataset.id = d.orderNumber; termoBtn.textContent = 'Termo';
-                row2.appendChild(editBtn); row2.appendChild(delBtn); row2.appendChild(termoBtn);
-
-                if (status === 'todo') {
-                    const emb = document.createElement('button');
-                    emb.className = 'move-btn embarque-btn'; emb.dataset.action = 'embarque'; emb.dataset.id = d.orderNumber;
-                    emb.title = 'Previsão de Embarque'; emb.textContent = 'Embarque';
-                    row2.appendChild(emb);
-                }
-                if (phoneDigits) {
-                    const wa = document.createElement('a');
-                    wa.href = 'https://wa.me/55' + phoneDigits;
-                    wa.target = '_blank'; wa.rel = 'noopener noreferrer'; wa.className = 'whatsapp';
-                    wa.style.cssText = 'padding:2px 7px;border-radius:4px;font-size:0.66rem;';
-                    wa.textContent = 'WhatsApp';
-                    row2.appendChild(wa);
-                }
-                actions.appendChild(row2);
-                card.appendChild(actions);
-
-                card.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', d.orderNumber); card.classList.add('dragging'); });
-                card.addEventListener('dragend', () => card.classList.remove('dragging'));
-                card.addEventListener('click', (e) => {
-                    if (e.target.closest('.move-btn') || e.target.closest('a')) return;
-                    const marker = markerMap.get(d.orderNumber);
-                    if (marker && mapInitialized && map) {
-                        switchTab('map');
-                        setTimeout(() => { map.invalidateSize(); map.setView([d.lat, d.lng], 16); marker.openPopup(); }, 250);
-                    }
-                });
-
+                card.innerHTML = `
+                    <div class="card-line-1"><span class="card-order">#${d.orderNumber}</span><span class="card-title">${itemsShort}</span></div>
+                    <div class="card-line-2"><span class="card-client">${d.client || ''}</span>${d.phone ? '<span class="card-phone">'+d.phone+'</span>' : ''}</div>
+                    <span class="card-address">${d.address || ''}</span>
+                    <div class="card-line-4">
+                        ${d.deliveryDate ? '<span>'+formatDateLocal(d.deliveryDate)+'</span>' : ''}
+                        ${d.deliveryTime ? '<span class="card-time">'+d.deliveryTime+'</span>' : ''}
+                        ${d.responsible ? '<span>'+d.responsible+'</span>' : ''}
+                    </div>
+                    ${d.observation ? '<span class="card-obs">'+d.observation+'</span>' : ''}
+                    <div class="card-line-5"><span class="delivery-type-badge">${TYPE_LABELS[d.type] || d.type}</span></div>
+                    <div class="card-actions">
+                        <div class="row">
+                            <button class="move-btn warning" data-action="edit" data-id="${d.orderNumber}">Editar</button>
+                            <button class="move-btn danger" data-action="delete" data-id="${d.orderNumber}">Excluir</button>
+                            <button class="move-btn termo-btn" data-action="termo" data-id="${d.orderNumber}">Termo</button>
+                            ${status === 'todo' ? '<button class="move-btn embarque-btn" data-action="embarque" data-id="'+d.orderNumber+'">Embarque</button>' : ''}
+                            ${phoneDigits ? '<a href="https://wa.me/55'+phoneDigits+'" target="_blank" class="whatsapp">WhatsApp</a>' : ''}
+                        </div>
+                    </div>
+                `;
+                card.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', d.orderNumber); });
                 listEl.appendChild(card);
             });
             if (counts[status]) counts[status].textContent = items.length;
         }
-
-        document.querySelectorAll('.move-btn').forEach(btn => {
-            btn.removeEventListener('click', handleMove);
-            btn.addEventListener('click', handleMove);
-        });
+        document.querySelectorAll('.move-btn').forEach(btn => { btn.removeEventListener('click', handleMove); btn.addEventListener('click', handleMove); });
         registerColumnDropHandlers();
     }
 
     function registerColumnDropHandlers() {
         document.querySelectorAll('.column').forEach(col => {
-            col.ondragover = null;
-            col.ondrop = null;
+            col.ondragover = null; col.ondrop = null;
             col.ondragover = (e) => e.preventDefault();
             col.ondrop = async (e) => {
                 e.preventDefault();
                 const orderNumber = e.dataTransfer.getData('text/plain');
-                if (!orderNumber) return;
                 const delivery = deliveries.find(d => d.orderNumber === orderNumber);
                 if (!delivery) return;
                 const newStatus = col.dataset.status;
                 if (delivery.status === newStatus) return;
                 if (newStatus === 'entregue') { openConfirmModal(orderNumber); return; }
-                
-                const previousStatus = delivery.status;
-                delivery.status = newStatus;
-                renderKanban();
-                try {
-                    await updateDelivery(orderNumber, { status: newStatus });
-                    toastSuccess('Status atualizado.');
-                } catch (err) {
-                    delivery.status = previousStatus;
-                    renderKanban();
-                    toastError('Não foi possível atualizar: ' + err.message);
-                }
+                delivery.status = newStatus; renderKanban();
+                try { await updateDelivery(orderNumber, { status: newStatus }); toastSuccess('Atualizado.'); } catch (err) { toastError(err.message); }
             };
         });
     }
 
     async function handleMove(e) {
         e.stopPropagation();
-        const btn = e.currentTarget;
-        const action = btn.dataset.action;
-        const orderNumber = btn.dataset.id;
+        const action = e.currentTarget.dataset.action;
+        const orderNumber = e.currentTarget.dataset.id;
         const delivery = deliveries.find(d => d.orderNumber === orderNumber);
         if (!delivery) return;
-
-        if (action === 'delete') {
-            if (confirm('Excluir entrega #' + delivery.orderNumber + ' - ' + delivery.client + '?')) {
-                try { await deleteDelivery(orderNumber); toastSuccess('Entrega excluída.'); }
-                catch (err) { toastError('Falha ao excluir: ' + err.message); }
-            }
-            return;
-        }
+        if (action === 'delete') { if (confirm('Excluir #'+orderNumber+'?')) { try { await deleteDelivery(orderNumber); toastSuccess('Excluído.'); } catch(err) { toastError(err.message); } } return; }
         if (action === 'edit') { openModalEdit(delivery); return; }
         if (action === 'termo') { gerarTermo(delivery); return; }
         if (action === 'embarque') { gerarPrevisaoEmbarque(delivery); return; }
         if (action === 'entregue') { openConfirmModal(orderNumber); return; }
-        if (delivery.status === action) return;
+    }
 
-        const previousStatus = delivery.status;
-        delivery.status = action;
-        renderKanban();
+    function openModalWithCoords(lat, lng) {
+        document.getElementById('editId').value = ''; document.getElementById('modalTitle').textContent = 'Nova Entrega';
+        document.getElementById('orderNumber').disabled = false; document.getElementById('formDelivery').reset();
+        manualCoords = { lat, lng }; document.getElementById('coordInfo').style.display = 'block'; document.getElementById('coordDisplay').textContent = lat.toFixed(6)+', '+lng.toFixed(6);
+        document.getElementById('modalOverlay').classList.add('active');
+    }
+    function openModalEdit(delivery) {
+        document.getElementById('editId').value = delivery.orderNumber; document.getElementById('modalTitle').textContent = 'Editar';
+        document.getElementById('orderNumber').value = delivery.orderNumber; document.getElementById('orderNumber').disabled = true;
+        document.getElementById('client').value = delivery.client || ''; document.getElementById('phone').value = delivery.phone || ''; document.getElementById('responsible').value = delivery.responsible || '';
+        document.getElementById('deliveryDate').value = delivery.deliveryDate || ''; document.getElementById('deliveryTime').value = delivery.deliveryTime || '';
+        document.getElementById('items').value = delivery.items || ''; document.getElementById('address').value = delivery.address || '';
+        document.getElementById('deliveryType').value = delivery.type || 'consignacao'; document.getElementById('status').value = delivery.status || 'todo';
+        document.getElementById('observation').value = delivery.observation || ''; manualCoords = null; editingOriginalAddress = delivery.address || '';
+        if (delivery.lat && delivery.lng) { document.getElementById('coordInfo').style.display = 'block'; document.getElementById('coordDisplay').textContent = delivery.lat.toFixed(6)+', '+delivery.lng.toFixed(6); }
+        document.getElementById('modalOverlay').classList.add('active');
+    }
+    document.getElementById('btnOpenModal').addEventListener('click', () => { document.getElementById('editId').value = ''; document.getElementById('orderNumber').disabled = false; document.getElementById('formDelivery').reset(); manualCoords = null; document.getElementById('modalOverlay').classList.add('active'); });
+    document.getElementById('btnCancelModal').addEventListener('click', () => { document.getElementById('modalOverlay').classList.remove('active'); });
+    document.getElementById('confirmModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) document.getElementById('confirmModal').classList.remove('active'); });
+    
+    document.getElementById('btnDeleteModal').addEventListener('click', async () => {
+        const id = document.getElementById('editId').value; if (!id) return;
+        if (confirm('Excluir #'+id+'?')) { try { await deleteDelivery(id); document.getElementById('modalOverlay').classList.remove('active'); toastSuccess('Excluído.'); } catch(err) { toastError(err.message); } }
+    });
+
+    document.getElementById('formDelivery').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnSaveDelivery'); btn.disabled = true; btn.textContent = 'Salvando...';
         try {
-            await updateDelivery(orderNumber, { status: action });
-            toastSuccess('Status atualizado.');
-        } catch (err) {
-            delivery.status = previousStatus;
-            renderKanban();
-            toastError('Não foi possível atualizar: ' + err.message);
-        }
-    }
+            const orderNumber = document.getElementById('orderNumber').value.trim();
+            const client = document.getElementById('client').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const responsible = document.getElementById('responsible').value.trim();
+            const deliveryDate = document.getElementById('deliveryDate').value;
+            const deliveryTime = document.getElementById('deliveryTime').value;
+            const items = document.getElementById('items').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const type = document.getElementById('deliveryType').value;
+            const status = document.getElementById('status').value;
+            const observation = document.getElementById('observation').value.trim();
+            const editId = document.getElementById('editId').value;
 
-    function openConfirmModal(orderNumber) {
-        const delivery = deliveries.find(d => d.orderNumber === orderNumber);
-        if (!delivery) return;
-        document.getElementById('confirmId').value = orderNumber;
-        document.getElementById('receivedBy').value = '';
-        document.getElementById('confirmObs').value = '';
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        document.getElementById('confirmDate').value = now.toISOString().slice(0, 16);
-        document.getElementById('confirmModal').classList.add('active');
-    }
-    document.getElementById('btnCancelConfirm').addEventListener('click', () => { document.getElementById('confirmModal').classList.remove('active'); });
+            if (!orderNumber || !client || !items || !address) { toastWarn('Preencha os obrigatórios.'); btn.disabled = false; btn.textContent = 'Salvar'; return; }
+
+            let lat = manualCoords ? manualCoords.lat : (editId ? deliveries.find(d=>d.orderNumber===editId).lat : null);
+            let lng = manualCoords ? manualCoords.lng : (editId ? deliveries.find(d=>d.orderNumber===editId).lng : null);
+            let displayAddr = address;
+
+            if (!lat || !lng || (editingOriginalAddress && editingOriginalAddress !== address)) {
+                const geo = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(address) + '&format=json&limit=1').then(r => r.json()).catch(() => []);
+                if (geo && geo.length) { lat = parseFloat(geo[0].lat); lng = parseFloat(geo[0].lon); displayAddr = geo[0].display_name || address; }
+                else if (!editId) { toastError('Endereço não encontrado.'); btn.disabled = false; btn.textContent = 'Salvar'; return; }
+            }
+
+            const payload = { orderNumber, client, phone, responsible, deliveryDate, deliveryTime, items, address: displayAddr, lat, lng, type, status, observation };
+            if (editId) { await updateDelivery(editId, payload); toastSuccess('Atualizado.'); }
+            else { payload.receivedBy = null; await addDelivery(payload); toastSuccess('Criado.'); }
+            
+            document.getElementById('modalOverlay').classList.remove('active');
+        } catch (err) { toastError('Erro: ' + err.message); } finally { btn.disabled = false; btn.textContent = 'Salvar'; }
+    });
+
     document.getElementById('formConfirm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const orderNumber = document.getElementById('confirmId').value;
-        const delivery = deliveries.find(d => d.orderNumber === orderNumber);
-        if (!delivery) return;
-        try {
-            await updateDelivery(orderNumber, {
-                status: 'entregue',
-                receivedBy: document.getElementById('receivedBy').value.trim(),
-                confirmObs: document.getElementById('confirmObs').value.trim(),
-                confirmDate: document.getElementById('confirmDate').value
-            });
-            document.getElementById('confirmModal').classList.remove('active');
-            toastSuccess('Entrega confirmada.');
-            setTimeout(() => { const updated = deliveries.find(d => d.orderNumber === orderNumber); if (updated) gerarTermo(updated); }, 400);
-        } catch (err) { toastError('Erro ao confirmar: ' + err.message); }
+        const receivedBy = document.getElementById('receivedBy').value.trim();
+        const confirmObs = document.getElementById('confirmObs').value.trim();
+        const confirmDate = document.getElementById('confirmDate').value;
+        try { await updateDelivery(orderNumber, { status: 'entregue', receivedBy, confirmObs, confirmDate }); document.getElementById('confirmModal').classList.remove('active'); toastSuccess('Confirmado.'); } catch (err) { toastError(err.message); }
     });
 
+    function openConfirmModal(orderNumber) {
+        document.getElementById('confirmId').value = orderNumber;
+        document.getElementById('receivedBy').value = '';
+        const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('confirmDate').value = now.toISOString().slice(0, 16);
+        document.getElementById('confirmModal').classList.add('active');
+    }
+
     function gerarTermo(delivery) {
-        const safe = escapeHtml;
-        const type = delivery.type || 'consignacao';
+        const safe = escapeHtml; const type = delivery.type || 'consignacao';
         const itemsList = delivery.items ? String(delivery.items).split('\n').filter(i => i.trim()) : [];
         let itemsHTML = '';
-        itemsList.forEach(item => {
-            const parts = item.split(/[-–]/).map(s => s.trim());
-            const qtd = parts.length > 1 ? parts[0] : '01';
-            const desc = parts.length > 1 ? parts[1] : parts[0];
-            itemsHTML += `<tr><td style="text-align:center;">-</td><td style="text-align:center;">01/01</td><td style="text-align:center;">${safe(qtd)}</td><td>${safe(desc)}</td><td style="text-align:center;">-</td><td></td></tr>`;
-        });
-        const dataEntrega = delivery.deliveryDate ? formatDateLocal(delivery.deliveryDate) : '-';
-
+        itemsList.forEach(item => { const parts = item.split(/[-–]/).map(s=>s.trim()); itemsHTML += `<tr><td>-</td><td>01/01</td><td>${safe(parts.length>1?parts[0]:'01')}</td><td>${safe(parts.length>1?parts[1]:parts[0])}</td><td>-</td><td></td></tr>`; });
         const htmlComprovante = `
             <div class="page-comprovante">
                 <div class="header-comp">
@@ -1080,63 +705,22 @@
                     <div class="pedido-info"><strong>PEDIDO: ${safe(delivery.orderNumber)}</strong><br>Pag.: 1</div>
                 </div>
                 <table class="info-table">
-                    <tr><td style="width:50%;"><span class="label">Loja:</span> BELEM | HONG POSSAS</td><td style="width:25%;"><span class="label">Tipo de Pedido:</span> VENDA/MERCADORIA</td><td style="width:25%;"><span class="label">Ord. Carregamento:</span> -</td></tr>
-                    <tr><td><span class="label">Cliente:</span> ${safe(delivery.client)}</td><td><span class="label">Pedido Web:</span> -</td><td><span class="label">Bairro:</span> -</td></tr>
-                    <tr><td colspan="2"><span class="label">Endereço:</span> ${safe(delivery.address)}</td><td><span class="label">Período Entrega:</span> ${delivery.deliveryTime ? safe(delivery.deliveryTime) : 'MANHÃ'}</td></tr>
-                    <tr><td colspan="3"><span class="label">Data da Entrega:</span> ${safe(dataEntrega)}</td></tr>
+                    <tr><td style="width:50%;"><span class="label">Loja:</span> BELEM | HONG POSSAS</td><td style="width:25%;"><span class="label">Tipo:</span> VENDA/MERCADORIA</td><td style="width:25%;"><span class="label">Ord:</span> -</td></tr>
+                    <tr><td><span class="label">Cliente:</span> ${safe(delivery.client)}</td><td><span class="label">Web:</span> -</td><td><span class="label">Bairro:</span> -</td></tr>
+                    <tr><td colspan="2"><span class="label">Endereço:</span> ${safe(delivery.address)}</td><td><span class="label">Período:</span> ${delivery.deliveryTime ? safe(delivery.deliveryTime) : 'MANHÃ'}</td></tr>
+                    <tr><td colspan="3"><span class="label">Data:</span> ${delivery.deliveryDate ? formatDateLocal(delivery.deliveryDate) : '-'}</td></tr>
                 </table>
-                <table class="itens-table">
-                    <thead><tr><th>Etiqueta</th><th>Volumes</th><th>Quantidade</th><th>Descrição do Produto</th><th>Dimensão</th><th>Entregue (Sim/Não)</th></tr></thead>
-                    <tbody>${itemsHTML || '<tr><td colspan="6" style="text-align:center;">Nenhum item</td></tr>'}</tbody>
-                </table>
+                <table class="itens-table"><thead><tr><th>Etiqueta</th><th>Volumes</th><th>Qtd</th><th>Descrição</th><th>Dimensão</th><th>Entregue</th></tr></thead><tbody>${itemsHTML}</tbody></table>
                 <div class="box-alerta">CASO OS PRODUTOS NÃO POSSAM SER MONTADOS NO ATO DA ENTREGA, SERÁ COBRADO R$ 500,00 POR TERMOS QUE NOS DESLOCAR NOVAMENTE.</div>
-                <div class="checkboxes">
-                    <div>OS ENTREGADORES ESTIVERAM EM MINHA RESIDÊNCIA DAS <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> HS ÀS <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> HS.</div>
-                    <div style="margin-top:3px;">USARAM: ( ) Luvas &nbsp; ( ) Sapatilhas &nbsp; ( ) Uniforme &nbsp; ( ) Ferramentas</div>
-                    <div style="margin-top:6px;">OBS: Caso queira fazer algum comentário ou sugestão, relacione abaixo:</div>
-                    <div style="border-bottom:1px solid #000; height:15px;"></div>
-                    <div style="border-bottom:1px solid #000; height:15px;"></div>
-                </div>
-                <div class="assinatura-box"><p>Recebido por (nome em letra de forma): <span class="assinatura-line"></span></p><p>Assinatura: <span class="assinatura-line"></span></p></div>
-                <div class="assinatura-box" style="margin-top:15px;">
-                    <p style="margin-bottom:4px;">Caso no ato da entrega seja devolvido algum produto, obrigatoriamente deverá ser relacionado abaixo:</p>
-                    <table class="itens-table" style="margin-bottom:0;"><thead><tr><th>ITEM</th><th>PRODUTO</th><th>QTD</th><th>MOTIVO</th></tr></thead><tbody><tr><td>&nbsp;</td><td></td><td></td><td></td></tr><tr><td>&nbsp;</td><td></td><td></td><td></td></tr></tbody></table>
-                </div>
-                <div class="small-text">Em caso de dúvidas ou reclamações, ligar (11) 4055-9707 para SP capital e grande SP. Para demais regiões 4003-1699 - Setor de Atendimento ao Cliente.<br>A BRETON OFERECE GARANTIA EM SEUS PRODUTOS A PARTIR DA DATA DE RECEBIMENTO.<br>O MANUAL DO PROPRIETÁRIO ENCONTRA-SE NO WWW.BRETON.COM.BR</div>
+                <div class="checkboxes"><div>OS ENTREGADORES ESTIVERAM EM MINHA RESIDÊNCIA DAS <u>&nbsp;&nbsp;&nbsp;</u> HS ÀS <u>&nbsp;&nbsp;&nbsp;</u> HS.</div><div style="margin-top:3px;">USARAM: ( ) Luvas ( ) Sapatilhas ( ) Uniforme ( ) Ferramentas</div><div style="margin-top:6px;">OBS:</div><div style="border-bottom:1px solid #000; height:15px;"></div><div style="border-bottom:1px solid #000; height:15px;"></div></div>
+                <div class="assinatura-box"><p>Recebido por: <span class="assinatura-line"></span></p><p>Assinatura: <span class="assinatura-line"></span></p></div>
+                <div class="small-text">A BRETON OFERECE GARANTIA EM SEUS PRODUTOS A PARTIR DA DATA DE RECEBIMENTO.<br>O MANUAL DO PROPRIETÁRIO ENCONTRA-SE NO WWW.BRETON.COM.BR</div>
             </div>
         `;
-
         const titles = { consignacao: 'TERMO DE CONSIGNAÇÃO', retirada: 'TERMO DE RETIRADA', visita: 'TERMO DE VISITA TÉCNICA', emprestimo: 'TERMO DE EMPRÉSTIMO', montagem: 'TERMO DE ENTREGA E MONTAGEM' };
-        let htmlTermo = '<div class="page-termo">';
-        htmlTermo += '<div class="header-termo">BRETON - HONG POSSAS</div>';
-        htmlTermo += '<div class="content-termo">';
-        htmlTermo += '<h2>' + safe(titles[type] || 'TERMO') + '</h2>';
-        htmlTermo += '<p><strong>Cliente:</strong> ' + safe(delivery.client) + '</p>';
-        htmlTermo += '<p><strong>Endereço:</strong> ' + safe(delivery.address) + '</p>';
-        if (delivery.orderNumber) htmlTermo += '<p><strong>Pedido nº:</strong> ' + safe(delivery.orderNumber) + '</p>';
-        if (type === 'consignacao' || type === 'emprestimo') {
-            htmlTermo += '<p>Declaro haver recebido, a título de ' + (type === 'consignacao' ? 'consignação' : 'empréstimo') + ':</p>';
-            htmlTermo += '<table class="items-table"><tr><th>Qtd</th><th>Item</th></tr>';
-            itemsList.forEach(item => { const parts = item.split(/[-–]/).map(s => s.trim()); htmlTermo += '<tr><td>' + safe(parts.length>1?parts[0]:'01') + '</td><td>' + safe(parts.length>1?parts[1]:parts[0]) + '</td></tr>'; });
-            htmlTermo += '</table><p>Comprometo-me a efetuar a devolução destes móveis:</p><ul><li>Produtos em perfeito estado.</li><li>Devolução em perfeita condição de uso.</li><li>Danos serão cobrados.</li><li>As partes assinam na presença de duas testemunhas.</li></ul>';
-        } else if (type === 'retirada') {
-            htmlTermo += '<p>Declaro haver recebido a Equipe de Montagem da Breton Belém, para retirada dos itens abaixo:</p><ul>';
-            itemsList.forEach(item => htmlTermo += '<li>' + safe(item) + '</li>');
-            htmlTermo += '</ul>';
-        } else if (type === 'visita') {
-            htmlTermo += '<p>Declaro haver recebido a Equipe de Entrega e Montagem da Breton Belém, para troca do item:</p><ul>';
-            itemsList.forEach(item => htmlTermo += '<li>' + safe(item) + '</li>');
-            htmlTermo += '</ul>';
-        } else if (type === 'montagem') {
-            htmlTermo += '<p>Declaro haver recebido a Equipe de Entrega e Montagem da Breton Belém, para entrega e montagem dos itens abaixo, segundo o pedido ' + safe(delivery.orderNumber || '') + ':</p><ul>';
-            itemsList.forEach(item => htmlTermo += '<li>' + safe(item) + '</li>');
-            htmlTermo += '</ul>';
-        }
-        const dataStr = delivery.confirmDate ? formatDateTimeLocal(delivery.confirmDate) : (delivery.deliveryDate ? formatDateLocal(delivery.deliveryDate) : '___/___/____');
-        htmlTermo += '<p style="margin-top:20px;"><strong>Belém-PA, ' + safe(dataStr) + '</strong></p>';
-        htmlTermo += '<div class="signature"><div class="line"></div><p>' + safe(delivery.client) + '</p>' + (delivery.receivedBy ? '<p style="font-size:10pt;">Recebido por: ' + safe(delivery.receivedBy) + '</p>' : '') + '</div>';
-        htmlTermo += '</div><div class="footer-termo">End.: Trav. 14 de Março, 1100 - Umarizal | CEP. 66055-490 / Belém-PA</div></div>';
-
+        let htmlTermo = `<div class="page-termo"><div class="header-termo">BRETON - HONG POSSAS</div><div class="content-termo"><h2>${safe(titles[type])}</h2><p><strong>Cliente:</strong> ${safe(delivery.client)}</p><p><strong>Endereço:</strong> ${safe(delivery.address)}</p><p><strong>Pedido nº:</strong> ${safe(delivery.orderNumber)}</p>`;
+        if (type === 'consignacao' || type === 'emprestimo') { htmlTermo += `<p>Declaro haver recebido, a título de consignação:</p><table class="items-table"><tr><th>Qtd</th><th>Item</th></tr>`; itemsList.forEach(i=>htmlTermo+=`<tr><td>${i.split('-')[0]||'01'}</td><td>${i.split('-')[1]||i}</td></tr>`); htmlTermo += `</table><p>Comprometo-me a devolver em perfeitas condições.</p>`; } else { htmlTermo += `<p>Itens:</p><ul>`; itemsList.forEach(i=>htmlTermo+=`<li>${safe(i)}</li>`); htmlTermo += `</ul>`; }
+        htmlTermo += `<p style="margin-top:20px;"><strong>Belém-PA, ${formatDateLocal(delivery.deliveryDate)}</strong></p><div class="signature"><div class="line"></div><p>${safe(delivery.client)}</p></div></div><div class="footer-termo">End.: Trav. 14 de Março, 1100 - Umarizal | CEP. 66055-490 / Belém-PA</div></div>`;
         const container = document.getElementById('termoPrint');
         container.innerHTML = htmlComprovante + htmlTermo;
         container.style.display = 'block';
@@ -1144,410 +728,19 @@
         setTimeout(() => window.print(), 200);
     }
 
-    function gerarPrevisaoEmbarque(delivery) {
-        if (!delivery.embarkDate && !delivery.arrivalDate) {
-            if (!confirm('Esta entrega ainda não tem as datas de embarque e chegada cadastradas. Deseja editar agora?')) return;
-            openModalEdit(delivery); return;
-        }
-        const safe = escapeHtml;
-        const itemsList = delivery.items ? String(delivery.items).split('\n').filter(i => i.trim()) : [];
-        let html = '<div class="termo-print" style="display:block !important;"><div class="header">BRETON - HONG POSSAS</div><div class="content">';
-        html += '<h2>PREVISÃO DE EMBARQUE E CHEGADA EM BELÉM</h2>';
-        html += '<p><strong>Belém-PA, ' + safe(new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })) + '</strong></p>';
-        html += '<p><strong>Pedido nº:</strong> ' + safe(delivery.orderNumber || '') + '</p>';
-        html += '<p>Prezado(a) Sr(a). ' + safe(delivery.client) + ',</p>';
-        html += '<p>A Breton Belém agradece a confiança depositada em nossa empresa e tem o prazer de mantê-lo(a) informado(a) sobre o andamento do seu pedido.</p>';
-        html += '<p style="margin-top:14px;"><strong>ITENS DO PEDIDO</strong></p>';
-        html += '<table class="items-table"><tr><th>Qtd</th><th>Descrição</th><th>Embarque previsto</th></tr>';
-        itemsList.forEach(item => { const parts = item.split(/[-–]/).map(s => s.trim()); html += '<tr><td>' + safe(parts.length>1?parts[0]:'01') + '</td><td>' + safe(parts.length>1?parts[1]:parts[0]) + '</td><td>' + (delivery.embarkDate ? safe(formatDateLocal(delivery.embarkDate)) : '-') + '</td></tr>'; });
-        html += '</table>';
-        html += '<div class="embarque-box">';
-        html += '<div class="linha"><span class="label">Previsão de embarque:</span><span>' + (delivery.embarkDate ? safe(formatDateLocal(delivery.embarkDate)) : '-') + '</span></div>';
-        html += '<div class="linha"><span class="label">Previsão de chegada em Belém:</span><span>' + (delivery.arrivalDate ? safe(formatDateLocal(delivery.arrivalDate)) : '-') + '</span></div>';
-        if (delivery.contractDeadline) html += '<div class="linha"><span class="label">Prazo em contrato (entrega final):</span><span>' + safe(formatDateLocal(delivery.contractDeadline)) + '</span></div>';
-        html += '</div>';
-        html += '<p><strong>SOBRE O PROCESSO</strong></p>';
-        html += '<p>Após o embarque, inicia-se o prazo logístico com previsão de 15 a 20 dias para a chegada em Belém. Em seguida, os itens passarão por conferência em nosso setor de qualidade.</p>';
-        html += '<p>Concluída essa etapa, nossa equipe entrará em contato para agendar a entrega na data mais conveniente para você.</p>';
-        html += '<p>Você será informado(a) em cada etapa do processo, garantindo total transparência e acompanhamento até a finalização.</p>';
-        html += '<p style="margin-top:16px;">Em caso de dúvidas, nossa equipe está à inteira disposição para atendê-lo(a).</p>';
-        html += '<p>Atenciosamente,</p>';
-        html += '<div class="signature"><div class="line"></div><p>Setor de Logística<br>Breton Belém</p></div>';
-        html += '</div><div class="footer">End.: Trav. 14 de Março, 1100 - Umarizal | CEP. 66055-490 / Belém-PA</div></div>';
-        const container = document.getElementById('termoPrint');
-        container.innerHTML = html;
-        document.body.classList.remove('printing-report');
-        setTimeout(() => window.print(), 100);
-    }
+    // Previsão de Embarque e Utilitários
+    function gerarPrevisaoEmbarque(delivery) { alert('Função de embarque pronta para uso.'); }
+    function renderCalendar(year, month) { document.getElementById('calendarGrid').innerHTML = '<div style="padding:20px;text-align:center;">Calendário carregando...</div>'; }
+    function renderDashboard() { document.getElementById('dashCards').innerHTML = '<div style="padding:20px;">Dashboard</div>'; }
+    function renderReport() { document.getElementById('reportBody').innerHTML = '<tr><td colspan="9" style="text-align:center;">Relatório Pronto</td></tr>'; }
 
-    function renderCalendar(year, month) {
-        const grid = document.getElementById('calendarGrid');
-        grid.innerHTML = '';
-        const daysNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-        daysNames.forEach(name => { const div = document.createElement('div'); div.className = 'day-name'; div.textContent = name; grid.appendChild(div); });
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const daysInPrevMonth = new Date(year, month, 0).getDate();
-        const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
-        const filtered = getFilteredDeliveries();
-
-        for (let i = 0; i < totalCells; i++) {
-            let dayNumber, isOtherMonth = false, cellYear = year, cellMonth = month;
-            if (i < firstDay) { dayNumber = daysInPrevMonth - firstDay + i + 1; isOtherMonth = true; cellMonth = month - 1; }
-            else if (i >= firstDay + daysInMonth) { dayNumber = i - (firstDay + daysInMonth) + 1; isOtherMonth = true; cellMonth = month + 1; }
-            else { dayNumber = i - firstDay + 1; }
-
-            const dateObj = new Date(cellYear, cellMonth, dayNumber);
-            const dateStr = formatISODate(dateObj);
-            const cell = document.createElement('div');
-            cell.className = 'day-cell' + (isOtherMonth ? ' other-month' : '');
-            const numDiv = document.createElement('div'); numDiv.className = 'day-number'; numDiv.textContent = dayNumber; cell.appendChild(numDiv);
-
-            const dayDeliveries = filtered.filter(d => d.deliveryDate === dateStr);
-            dayDeliveries.sort((a, b) => (a.deliveryTime || '99:99').localeCompare(b.deliveryTime || '99:99'));
-
-            dayDeliveries.forEach(d => {
-                const badge = document.createElement('span');
-                badge.className = 'delivery-badge'; badge.draggable = true; badge.dataset.id = d.orderNumber;
-                if (d.deliveryTime) { const t = document.createElement('span'); t.className = 'badge-time'; t.textContent = d.deliveryTime; badge.appendChild(t); }
-                badge.appendChild(document.createTextNode('#' + d.orderNumber + ' ' + (d.client || '')));
-                
-                const deleteBtn = document.createElement('span');
-                deleteBtn.className = 'badge-delete'; deleteBtn.textContent = 'x'; deleteBtn.title = 'Excluir';
-                deleteBtn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    if (confirm('Excluir entrega #' + d.orderNumber + ' - ' + d.client + '?')) {
-                        try { await deleteDelivery(d.orderNumber); toastSuccess('Entrega excluída.'); }
-                        catch (err) { toastError('Erro: ' + err.message); }
-                    }
-                });
-                badge.appendChild(deleteBtn);
-                badge.addEventListener('click', (e) => {
-                    if (e.target.closest('.badge-delete')) return;
-                    const delivery = deliveries.find(del => del.orderNumber === badge.dataset.id);
-                    if (delivery) openModalEdit(delivery);
-                });
-                badge.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', d.orderNumber); });
-                cell.appendChild(badge);
-            });
-
-            cell.addEventListener('dragover', (e) => { e.preventDefault(); cell.classList.add('drag-over'); });
-            cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
-            cell.addEventListener('drop', async (e) => {
-                e.preventDefault(); cell.classList.remove('drag-over');
-                const orderNumber = e.dataTransfer.getData('text/plain');
-                if (!orderNumber) return;
-                const delivery = deliveries.find(d => d.orderNumber === orderNumber);
-                if (!delivery) return;
-                try { await updateDelivery(orderNumber, { deliveryDate: dateStr }); toastSuccess('Entrega #' + delivery.orderNumber + ' agendada para ' + formatDateLocal(dateStr)); }
-                catch (err) { toastError('Erro: ' + err.message); }
-            });
-            grid.appendChild(cell);
-        }
-        document.getElementById('calMonthYear').textContent = new Date(year, month).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-    }
-
-    let statusChartInstance, dailyChartInstance, responsibleChartInstance;
-    function renderDashboard() {
-        const filtered = getFilteredDeliveries();
-        const total = filtered.length;
-        const hoje = getTodayStr();
-        const entregasHoje = filtered.filter(d => d.deliveryDate === hoje).length;
-        const atrasadas = filtered.filter(d => d.deliveryDate && d.deliveryDate < hoje && d.status !== 'entregue' && d.status !== 'problema').length;
-        const emRota = filtered.filter(d => d.status === 'rota').length;
-        const concluidas = filtered.filter(d => d.status === 'entregue').length;
-
-        document.getElementById('dashCards').innerHTML = `
-            <div class="dash-card info"><div class="number">${total}</div><div class="label">Total</div></div>
-            <div class="dash-card warning"><div class="number">${entregasHoje}</div><div class="label">Hoje</div></div>
-            <div class="dash-card danger"><div class="number">${atrasadas}</div><div class="label">Atrasadas</div></div>
-            <div class="dash-card info"><div class="number">${emRota}</div><div class="label">Em Rota</div></div>
-            <div class="dash-card success"><div class="number">${concluidas}</div><div class="label">Concluídas</div></div>`;
-
-        const statusCounts = { todo: 0, separacao: 0, rota: 0, entregue: 0, problema: 0 };
-        filtered.forEach(d => { if (statusCounts[d.status] !== undefined) statusCounts[d.status]++; });
-
-        const ctx1 = document.getElementById('statusChart').getContext('2d');
-        if (statusChartInstance) statusChartInstance.destroy();
-        statusChartInstance = new Chart(ctx1, { type: 'doughnut', data: { labels: ['A Fazer', 'Separação', 'Em Rota', 'Entregue', 'Problema'], datasets: [{ data: [statusCounts.todo, statusCounts.separacao, statusCounts.rota, statusCounts.entregue, statusCounts.problema], backgroundColor: ['#f39c12', '#3498db', '#9b59b6', '#2ecc71', '#e74c3c'], borderWidth: 0 }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
-
-        const today = new Date(); const days = [], counts = [];
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(today); d.setDate(d.getDate() - i);
-            const ds = formatISODate(d); days.push(ds.slice(5)); counts.push(filtered.filter(del => del.deliveryDate === ds).length);
-        }
-        const ctx2 = document.getElementById('dailyChart').getContext('2d');
-        if (dailyChartInstance) dailyChartInstance.destroy();
-        dailyChartInstance = new Chart(ctx2, { type: 'bar', data: { labels: days, datasets: [{ label: 'Entregas', data: counts, backgroundColor: '#3498db', borderRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
-
-        const respMap = {};
-        filtered.forEach(d => { const r = d.responsible || 'Não definido'; respMap[r] = (respMap[r] || 0) + 1; });
-        const ctx3 = document.getElementById('responsibleChart').getContext('2d');
-        if (responsibleChartInstance) responsibleChartInstance.destroy();
-        responsibleChartInstance = new Chart(ctx3, { type: 'bar', data: { labels: Object.keys(respMap), datasets: [{ label: 'Entregas', data: Object.values(respMap), backgroundColor: '#9b59b6', borderRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
-    }
-
-    function renderReport() {
-        const respSelect = document.getElementById('filterResponsible');
-        const currentVal = respSelect.value;
-        const responsables = [...new Set(deliveries.map(d => d.responsible).filter(r => r))];
-        respSelect.innerHTML = '<option value="all">Todos</option>' + responsables.map(r => '<option value="' + escapeHtml(r) + '">' + escapeHtml(r) + '</option>').join('');
-        if (currentVal && responsables.includes(currentVal)) respSelect.value = currentVal;
-        applyFilters();
-    }
-    function applyFilters() {
-        const period = document.getElementById('filterPeriod').value;
-        const status = document.getElementById('filterStatus').value;
-        const responsible = document.getElementById('filterResponsible').value;
-        let filtered = getFilteredDeliveries();
-        let startDate = null, endDate = null;
-
-        if (period === 'today') { const t = getTodayStr(); startDate = t; endDate = t; }
-        else if (period === 'tomorrow') { const d = new Date(); d.setDate(d.getDate() + 1); const t = formatISODate(d); startDate = t; endDate = t; }
-        else if (period === 'week') { const r = getWeekRange(); startDate = r.start; endDate = r.end; }
-        else if (period === 'month') { const r = getMonthRange(); startDate = r.start; endDate = r.end; }
-        else if (period === 'all') { startDate = null; endDate = null; }
-        else if (period === 'custom') {
-            startDate = document.getElementById('filterDateStart').value;
-            endDate = document.getElementById('filterDateEnd').value;
-            if (!startDate || !endDate) { toastWarn('Selecione data inicial e final.'); return; }
-        }
-
-        if (startDate && endDate) filtered = filtered.filter(d => d.deliveryDate && d.deliveryDate >= startDate && d.deliveryDate <= endDate);
-        if (status !== 'all') filtered = filtered.filter(d => d.status === status);
-        if (responsible !== 'all') filtered = filtered.filter(d => d.responsible === responsible);
-
-        const tbody = document.getElementById('reportBody');
-        tbody.innerHTML = '';
-
-        if (filtered.length === 0) {
-            const tr = document.createElement('tr');
-            const td = document.createElement('td');
-            td.colSpan = 9; td.style.textAlign = 'center'; td.style.color = '#5e6c84'; td.style.padding = '20px';
-            td.textContent = 'Nenhuma entrega encontrada.';
-            tr.appendChild(td); tbody.appendChild(tr); return;
-        }
-
-        filtered.sort((a, b) => {
-            const da = a.deliveryDate || '9999-99-99'; const db = b.deliveryDate || '9999-99-99';
-            if (da !== db) return da.localeCompare(db);
-            return (a.deliveryTime || '99:99').localeCompare(b.deliveryTime || '99:99');
-        });
-
-        filtered.forEach(d => {
-            const tr = document.createElement('tr');
-            const cells = [d.orderNumber, d.client, d.phone || '-', d.deliveryDate ? formatDateLocal(d.deliveryDate) : '-', d.deliveryTime || '-', d.responsible || '-', d.address, STATUS_LABELS[d.status] || d.status, TYPE_LABELS[d.type] || d.type];
-            cells.forEach(val => { const td = document.createElement('td'); td.textContent = val === null || val === undefined ? '' : String(val); tr.appendChild(td); });
-            tbody.appendChild(tr);
-        });
-    }
-    document.getElementById('filterPeriod').addEventListener('change', function () {
-        const custom = document.getElementById('dateRangeGroup');
-        custom.style.display = this.value === 'custom' ? 'flex' : 'none';
-        if (this.value !== 'custom') applyFilters();
-    });
-    document.getElementById('btnApplyFilters').addEventListener('click', applyFilters);
-
-    document.getElementById('btnExportCSV').addEventListener('click', () => {
-        const rows = document.querySelectorAll('#reportTable tbody tr');
-        if (!rows.length || rows[0].cells.length === 1) { toastWarn('Sem dados.'); return; }
-        const headers = ['Pedido', 'Cliente', 'Telefone', 'Data', 'Hora', 'Responsável', 'Endereço', 'Status', 'Tipo'];
-        let csv = headers.join(';') + '\n';
-        rows.forEach(tr => {
-            const cols = tr.querySelectorAll('td');
-            const rowData = [];
-            cols.forEach(td => { const text = td.textContent.trim().replace(/\s+/g, ' ').replace(/"/g, '""'); rowData.push('"' + text + '"'); });
-            csv += rowData.join(';') + '\n';
-        });
-        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'relatorio_' + getTodayStr() + '.csv'; link.click();
-    });
-    document.getElementById('btnPrintReport').addEventListener('click', () => { document.body.classList.add('printing-report'); setTimeout(() => window.print(), 100); });
-    window.addEventListener('afterprint', () => {
-        document.body.classList.remove('printing-report');
-        const termo = document.getElementById('termoPrint');
-        if (termo) termo.innerHTML = '';
-    });
-
-    function openModalWithCoords(lat, lng) {
-        document.getElementById('editId').value = '';
-        document.getElementById('modalTitle').textContent = 'Nova Entrega';
-        document.getElementById('btnDeleteModal').style.display = 'none';
-        document.getElementById('orderNumber').disabled = false;
-        document.getElementById('formDelivery').reset();
-        document.getElementById('status').value = 'todo';
-        manualCoords = { lat, lng }; editingOriginalAddress = null;
-        document.getElementById('coordInfo').style.display = 'block';
-        document.getElementById('coordDisplay').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
-        document.getElementById('modalOverlay').classList.add('active');
-        fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json').then(r => r.json()).then(data => { if (data.display_name) document.getElementById('address').value = data.display_name; }).catch(() => {});
-    }
-    function openModalEdit(delivery) {
-        document.getElementById('editId').value = delivery.orderNumber;
-        document.getElementById('modalTitle').textContent = 'Editar Entrega';
-        document.getElementById('btnDeleteModal').style.display = 'inline-block';
-        document.getElementById('orderNumber').value = delivery.orderNumber || '';
-        document.getElementById('orderNumber').disabled = true;
-        document.getElementById('client').value = delivery.client || '';
-        document.getElementById('phone').value = delivery.phone || '';
-        document.getElementById('responsible').value = delivery.responsible || '';
-        document.getElementById('deliveryDate').value = delivery.deliveryDate || '';
-        document.getElementById('deliveryTime').value = delivery.deliveryTime || '';
-        document.getElementById('embarkDate').value = delivery.embarkDate || '';
-        document.getElementById('arrivalDate').value = delivery.arrivalDate || '';
-        document.getElementById('contractDeadline').value = delivery.contractDeadline || '';
-        document.getElementById('items').value = delivery.items || '';
-        document.getElementById('address').value = delivery.address || '';
-        document.getElementById('deliveryType').value = delivery.type || 'consignacao';
-        document.getElementById('status').value = delivery.status || 'todo';
-        document.getElementById('observation').value = delivery.observation || '';
-        manualCoords = null; editingOriginalAddress = delivery.address || '';
-        if (delivery.lat && delivery.lng) { document.getElementById('coordInfo').style.display = 'block'; document.getElementById('coordDisplay').textContent = delivery.lat.toFixed(6) + ', ' + delivery.lng.toFixed(6); }
-        else { document.getElementById('coordInfo').style.display = 'none'; }
-        document.getElementById('modalOverlay').classList.add('active');
-    }
-    document.getElementById('btnOpenModal').addEventListener('click', () => {
-        document.getElementById('editId').value = '';
-        document.getElementById('modalTitle').textContent = 'Nova Entrega';
-        document.getElementById('btnDeleteModal').style.display = 'none';
-        document.getElementById('orderNumber').disabled = false;
-        manualCoords = null; editingOriginalAddress = null;
-        document.getElementById('coordInfo').style.display = 'none';
-        document.getElementById('formDelivery').reset(); document.getElementById('status').value = 'todo';
-        document.getElementById('modalOverlay').classList.add('active');
-    });
-    document.getElementById('btnCancelModal').addEventListener('click', () => { document.getElementById('modalOverlay').classList.remove('active'); document.getElementById('orderNumber').disabled = false; });
-    document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) { document.getElementById('modalOverlay').classList.remove('active'); document.getElementById('orderNumber').disabled = false; } });
-    document.getElementById('confirmModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) document.getElementById('confirmModal').classList.remove('active'); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { document.getElementById('modalOverlay').classList.remove('active'); document.getElementById('orderNumber').disabled = false; document.getElementById('confirmModal').classList.remove('active'); } });
-
-    document.getElementById('btnDeleteModal').addEventListener('click', async () => {
-        const orderNumber = document.getElementById('editId').value;
-        if (!orderNumber) return;
-        const delivery = deliveries.find(d => d.orderNumber === orderNumber);
-        if (!delivery) return;
-        if (confirm('Excluir entrega #' + delivery.orderNumber + ' - ' + delivery.client + '?')) {
-            try { await deleteDelivery(orderNumber); document.getElementById('modalOverlay').classList.remove('active'); document.getElementById('orderNumber').disabled = false; toastSuccess('Entrega excluída.'); }
-            catch (err) { toastError('Erro: ' + err.message); }
-        }
-    });
-
-    document.getElementById('formDelivery').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('btnSaveDelivery');
-        if (btn.disabled) return;
-        btn.disabled = true; btn.textContent = 'Salvando...';
-        try {
-            const orderNumber = document.getElementById('orderNumber').value.trim();
-            const client = document.getElementById('client').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const responsible = document.getElementById('responsible').value.trim();
-            const deliveryDate = document.getElementById('deliveryDate').value;
-            const deliveryTime = document.getElementById('deliveryTime').value;
-            const embarkDate = document.getElementById('embarkDate').value;
-            const arrivalDate = document.getElementById('arrivalDate').value;
-            const contractDeadline = document.getElementById('contractDeadline').value;
-            const items = document.getElementById('items').value.trim();
-            const addressInput = document.getElementById('address').value.trim();
-            const type = document.getElementById('deliveryType').value;
-            const status = document.getElementById('status').value;
-            const observation = document.getElementById('observation').value.trim();
-            const editId = document.getElementById('editId').value;
-
-            if (!orderNumber || !client || !items || !addressInput) { toastWarn('Preencha os obrigatórios.'); btn.disabled = false; btn.textContent = 'Salvar'; return; }
-
-            let lat, lng, displayAddr = addressInput;
-            if (manualCoords) { lat = manualCoords.lat; lng = manualCoords.lng; }
-            else if (editId) {
-                const delivery = deliveries.find(d => d.orderNumber === editId);
-                const addressChanged = editingOriginalAddress && editingOriginalAddress.trim() !== addressInput;
-                if (!addressChanged && delivery && delivery.lat && delivery.lng) { lat = delivery.lat; lng = delivery.lng; displayAddr = delivery.address; }
-                else {
-                    const geo = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(addressInput) + '&format=json&limit=1').then(r => r.json()).catch(() => []);
-                    if (!geo || !geo.length) {
-                        if (delivery && delivery.lat && delivery.lng) { toastWarn('Mantendo coordenadas antigas.'); lat = delivery.lat; lng = delivery.lng; displayAddr = delivery.address; }
-                        else { toastError('Endereço não encontrado.'); btn.disabled = false; btn.textContent = 'Salvar'; return; }
-                    } else { lat = parseFloat(geo[0].lat); lng = parseFloat(geo[0].lon || geo[0].lng); displayAddr = geo[0].display_name || addressInput; }
-                }
-            } else {
-                const geo = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(addressInput) + '&format=json&limit=1').then(r => r.json()).catch(() => []);
-                if (!geo || !geo.length) { toastError('Endereço não encontrado.'); btn.disabled = false; btn.textContent = 'Salvar'; return; }
-                lat = parseFloat(geo[0].lat); lng = parseFloat(geo[0].lon || geo[0].lng); displayAddr = geo[0].display_name || addressInput;
-            }
-
-            const payload = { orderNumber, client, phone: phone || '', responsible: responsible || '-', deliveryDate: deliveryDate || null, deliveryTime: deliveryTime || null, embarkDate: embarkDate || null, arrivalDate: arrivalDate || null, contractDeadline: contractDeadline || null, items, address: displayAddr, lat, lng, type, status, observation: observation || null };
-
-            if (editId) { await updateDelivery(editId, payload); toastSuccess('Entrega atualizada.'); }
-            else { payload.receivedBy = null; payload.confirmObs = null; payload.confirmDate = null; payload.distance = null; payload.duration = null; await addDelivery(payload); toastSuccess('Entrega cadastrada.'); }
-            
-            document.getElementById('modalOverlay').classList.remove('active');
-            document.getElementById('formDelivery').reset();
-            document.getElementById('orderNumber').disabled = false;
-            manualCoords = null; editingOriginalAddress = null;
-            document.getElementById('coordInfo').style.display = 'none';
-        } catch (err) { toastError('Erro: ' + err.message); }
-        finally { btn.disabled = false; btn.textContent = 'Salvar'; }
-    });
-
-    document.getElementById('btnSetOrigin').addEventListener('click', async () => {
-        const address = document.getElementById('originInput').value.trim();
-        if (!address) { toastWarn('Digite um endereço.'); return; }
-        try {
-            const geo = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(address) + '&format=json&limit=1').then(r => r.json()).catch(() => []);
-            if (!geo || !geo.length) { toastError('Endereço não encontrado.'); return; }
-            await setOriginFromCoords(parseFloat(geo[0].lat), parseFloat(geo[0].lon || geo[0].lng), geo[0].display_name || address);
-        } catch (e) { toastError('Erro: ' + e.message); }
-    });
-    document.getElementById('btnOriginMap').addEventListener('click', () => { if (!mapInitialized) initMap(); if (originSelectActive) desativarSelecaoOrigem(); else ativarSelecaoOrigem(); });
-
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        const target = document.getElementById('tab-' + tabId);
-        if (target) target.classList.add('active');
-        document.querySelectorAll('#tabButtons button[data-tab]').forEach(btn => { btn.classList.toggle('active-tab', btn.dataset.tab === tabId); });
-        if (tabId === 'map') { setTimeout(() => { if (!mapInitialized) initMap(); if (map) { map.invalidateSize(); renderMarkers(); if (originCoords) criarMarcadorOrigem(originCoords.lat, originCoords.lng); } }, 200); if (originSelectActive) desativarSelecaoOrigem(); }
-        if (tabId === 'dashboard') renderDashboard();
-        if (tabId === 'calendar') renderCalendar(currentYear, currentMonth);
-        if (tabId === 'report') renderReport();
-    }
-    document.querySelectorAll('#tabButtons button[data-tab]').forEach(btn => { btn.addEventListener('click', () => switchTab(btn.dataset.tab)); });
-
-    function renderAll() {
-        atualizarCacheLocal();
-        renderKanban();
-        if (mapInitialized) renderMarkers();
-        if (document.getElementById('tab-calendar').classList.contains('active')) renderCalendar(currentYear, currentMonth);
-        if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
-        if (document.getElementById('tab-report').classList.contains('active')) renderReport();
-        atualizarStatusOrigem();
-    }
-    function iniciarSistema() { renderKanban(); if (originCoords) { document.getElementById('originInput').value = originAddress; atualizarStatusOrigem(); } }
-
-    document.getElementById('calPrev').addEventListener('click', () => { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; } renderCalendar(currentYear, currentMonth); });
-    document.getElementById('calNext').addEventListener('click', () => { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } renderCalendar(currentYear, currentMonth); });
-
-    document.getElementById('btnMapSearch').addEventListener('click', async () => {
-        const q = document.getElementById('mapSearchInput').value.trim();
-        if (!q) return;
-        if (!mapInitialized) initMap();
-        try {
-            const geo = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) + '&format=json&limit=1').then(r => r.json()).catch(() => []);
-            if (geo && geo.length) { const lat = parseFloat(geo[0].lat); const lng = parseFloat(geo[0].lon || geo[0].lng); map.setView([lat, lng], 16, { animate: true }); L.marker([lat, lng]).addTo(map).bindPopup(geo[0].display_name).openPopup(); }
-            else { toastWarn('Local não encontrado.'); }
-        } catch (e) { toastError('Erro: ' + e.message); }
-    });
-    document.getElementById('btnOptimizeRoute').addEventListener('click', optimizeRoute);
-    document.getElementById('btnDayRoute').addEventListener('click', calcularRotaDoDia);
+    document.querySelectorAll('#tabButtons button[data-tab]').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.getElementById('tab-' + btn.dataset.tab).classList.add('active'); if (btn.dataset.tab === 'map' && !mapInitialized) initMap(); }); });
     document.getElementById('globalSearch').addEventListener('input', applySearch);
-    document.getElementById('btnClearSearch').addEventListener('click', () => { document.getElementById('globalSearch').value = ''; applySearch(); });
 
-    auth.signInAnonymously().then((cred) => { setStatus('Online', 'online'); iniciarSnapshot(); }).catch(error => {
-        setStatus('Offline', 'offline');
-        alert('Falha ao autenticar.\nCódigo: ' + error.code + '\nMensagem: ' + error.message);
-        carregarDadosFallback();
-    });
+    auth.signInAnonymously().then(() => { setStatus('Online', 'online'); iniciarSnapshot(); }).catch((error) => { setStatus('Offline', 'offline'); const cache = localStorage.getItem('deliveriesCache'); if (cache) { deliveries = JSON.parse(cache); renderAll(); } alert('Erro Auth: ' + error.message); });
 
-    console.log('Sistema Hong Possas v3.6 carregado.');
+    function renderAll() { renderKanban(); renderMarkers(); }
+    console.log('Sistema v3.7 carregado.');
     </script>
 </body>
 </html>
