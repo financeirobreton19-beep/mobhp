@@ -91,7 +91,6 @@
     .day-route-control .btn-calc { width: 100%; padding: 6px; background: #6b1a2a; color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
     .day-route-control .btn-calc:hover { background: #8a2235; }
     .day-route-control .info-day { font-size: 0.72rem; color: #5e6c84; margin-top: 8px; padding-top: 8px; border-top: 1px solid #ebecf0; line-height: 1.5; }
-    .day-route-control .info-day strong { color: #172b4d; }
     .route-info { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.95); padding: 8px 16px; border-radius: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-size: 0.8rem; display: none; z-index: 999; font-weight: 500; white-space: nowrap; }
     .route-info.show { display: block; }
 
@@ -162,7 +161,6 @@
     .modal-box .coord-info { background: #f4f5f7; padding: 6px 10px; border-radius: 4px; font-size: 0.8rem; color: #2c3e50; margin: 4px 0 8px; }
     .modal-box .section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6b1a2a; font-weight: 700; margin: 14px 0 4px; padding-bottom: 3px; border-bottom: 1px solid #ebecf0; }
 
-    /* ===== IMPRESSÃO ===== */
     .termo-print { display: none; }
     @media print {
         body * { visibility: hidden; }
@@ -428,16 +426,49 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+    // ============================================================
+    //  UTILITÁRIOS E CONFIGURAÇÃO FIREBASE
+    // ============================================================
     function escapeHtml(s) {
         if (s === null || s === undefined) return '';
         return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
-    function formatDateLocal(dateStr) { if (!dateStr) return ''; try { if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) { const [y,m,d] = dateStr.split('-'); return d+'/'+m+'/'+y; } return new Date(dateStr).toLocaleDateString('pt-BR'); } catch(e) { return ''; } }
-    function formatDateTimeLocal(dtStr) { if (!dtStr) return ''; try { return new Date(dtStr).toLocaleString('pt-BR'); } catch(e) { return ''; } }
-    function getTodayStr() { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-    function formatISODate(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-    function getMonthRange() { const hoje = new Date(); const start = new Date(hoje.getFullYear(), hoje.getMonth(), 1); const end = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0); return { start: formatISODate(start), end: formatISODate(end) }; }
-    function showToast(message, type) { const container = document.getElementById('toastContainer'); const t = document.createElement('div'); t.className = 'toast ' + (type || ''); t.textContent = message; container.appendChild(t); setTimeout(() => { t.style.opacity = '0'; }, 3500); setTimeout(() => t.remove(), 4000); }
+    function formatDateLocal(dateStr) {
+        if (!dateStr) return '';
+        try {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                const [y, m, d] = dateStr.split('-');
+                return d + '/' + m + '/' + y;
+            }
+            return new Date(dateStr).toLocaleDateString('pt-BR');
+        } catch (e) { return ''; }
+    }
+    function formatDateTimeLocal(dtStr) {
+        if (!dtStr) return '';
+        try { return new Date(dtStr).toLocaleString('pt-BR'); } catch (e) { return ''; }
+    }
+    function getTodayStr() {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function formatISODate(d) {
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function getMonthRange() {
+        const hoje = new Date();
+        const start = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        const end = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+        return { start: formatISODate(start), end: formatISODate(end) };
+    }
+    function showToast(message, type) {
+        const container = document.getElementById('toastContainer');
+        const t = document.createElement('div');
+        t.className = 'toast ' + (type || '');
+        t.textContent = message;
+        container.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; }, 3500);
+        setTimeout(() => t.remove(), 4000);
+    }
     function toastSuccess(m) { showToast(m, 'success'); }
     function toastError(m) { showToast(m, 'error'); }
     function toastWarn(m) { showToast(m, 'warn'); }
@@ -456,6 +487,29 @@
     const statusEl = document.getElementById('firebaseStatus');
     function setStatus(text, className) { statusEl.textContent = text; statusEl.className = className; }
 
+    // ============================================================
+    //  ESTADO GLOBAL
+    // ============================================================
+    let deliveries = [];
+    let originCoords = null;
+    let originAddress = '';
+    let map = null;
+    let mapInitialized = false;
+    let markersLayer = null;
+    let originMarker = null;
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
+    let manualCoords = null;
+    let editingOriginalAddress = null;
+    let searchTerm = '';
+    let statusChartInstance, dailyChartInstance, responsibleChartInstance;
+
+    const STATUS_LABELS = { todo: 'A Fazer', separacao: 'Separação', rota: 'Em Rota', entregue: 'Entregue', problema: 'Problema' };
+    const TYPE_LABELS = { consignacao: 'Consignação', retirada: 'Retirada', visita: 'Visita Técnica', emprestimo: 'Empréstimo', montagem: 'Entrega e Montagem' };
+
+    // ============================================================
+    //  CRUD FIREBASE
+    // ============================================================
     async function addDelivery(data) {
         const orderNumber = String(data.orderNumber || '').trim();
         if (!orderNumber) throw new Error('Número do pedido é obrigatório.');
@@ -465,9 +519,13 @@
     async function updateDelivery(orderNumber, data) {
         const id = String(orderNumber || '').trim();
         if (!id) throw new Error('Número do pedido é obrigatório.');
-        try { await db.collection('entregas').doc(id).update(data); } 
-        catch (error) { if (error.code === 'not-found' || error.message.includes('No document to update')) { await db.collection('entregas').doc(id).set({ ...data, orderNumber: id }, { merge: true }); } else { throw error; } }
-        
+        try {
+            await db.collection('entregas').doc(id).update(data);
+        } catch (error) {
+            if (error.code === 'not-found' || error.message.includes('No document to update')) {
+                await db.collection('entregas').doc(id).set({ ...data, orderNumber: id }, { merge: true });
+            } else { throw error; }
+        }
         const index = deliveries.findIndex(d => d.orderNumber === id);
         if (index !== -1) { deliveries[index] = { ...deliveries[index], ...data }; }
         renderAll();
@@ -480,51 +538,74 @@
         renderAll();
     }
 
-    let deliveries = [];
-    let originCoords = null;
-    let originAddress = '';
-    let map = null;
-    let mapInitialized = false;
-    let markersLayer = null;
-    let markerMap = new Map();
-    let originMarker = null;
-    let currentYear = new Date().getFullYear();
-    let currentMonth = new Date().getMonth();
-    let manualCoords = null;
-    let editingOriginalAddress = null;
-    let searchTerm = '';
-
-    const STATUS_LABELS = { todo: 'A Fazer', separacao: 'Separação', rota: 'Em Rota', entregue: 'Entregue', problema: 'Problema' };
-    const TYPE_LABELS = { consignacao: 'Consignação', retirada: 'Retirada', visita: 'Visita Técnica', emprestimo: 'Empréstimo', montagem: 'Entrega e Montagem' };
-
+    // ============================================================
+    //  BUSCA E FILTROS
+    // ============================================================
     function normalizedSearch(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
-    function matchesSearch(d) { if (!searchTerm) return true; const hay = [d.orderNumber, d.client, d.phone, d.address, d.responsible, d.items, d.observation].map(normalizedSearch).join(' | '); return hay.indexOf(searchTerm) !== -1; }
+    function matchesSearch(d) {
+        if (!searchTerm) return true;
+        const hay = [d.orderNumber, d.client, d.phone, d.address, d.responsible, d.items, d.observation].map(normalizedSearch).join(' | ');
+        return hay.indexOf(searchTerm) !== -1;
+    }
     function getFilteredDeliveries() { return deliveries.filter(matchesSearch); }
-    function applySearch() { const input = document.getElementById('globalSearch'); const clearBtn = document.getElementById('btnClearSearch'); const countEl = document.getElementById('searchCount'); searchTerm = normalizedSearch(input.value.trim()); if (searchTerm) { clearBtn.classList.add('show'); countEl.textContent = getFilteredDeliveries().length + '/' + deliveries.length; } else { clearBtn.classList.remove('show'); countEl.textContent = ''; } renderAll(); }
+    function applySearch() {
+        const input = document.getElementById('globalSearch');
+        const clearBtn = document.getElementById('btnClearSearch');
+        const countEl = document.getElementById('searchCount');
+        searchTerm = normalizedSearch(input.value.trim());
+        if (searchTerm) {
+            clearBtn.classList.add('show');
+            countEl.textContent = getFilteredDeliveries().length + '/' + deliveries.length;
+        } else {
+            clearBtn.classList.remove('show');
+            countEl.textContent = '';
+        }
+        renderAll();
+    }
 
+    // ============================================================
+    //  SNAPSHOT FIREBASE
+    // ============================================================
     function iniciarSnapshot() {
         db.collection('entregas').orderBy('orderNumber').onSnapshot((snapshot) => {
             deliveries = [];
             snapshot.forEach(doc => { deliveries.push({ id: doc.id, ...doc.data() }); });
             setStatus('Online (' + deliveries.length + ')', 'online');
-            localStorage.setItem('deliveriesCache', JSON.stringify(deliveries)); // Backup local
+            localStorage.setItem('deliveriesCache', JSON.stringify(deliveries));
             renderAll();
         }, (error) => {
             setStatus('Offline', 'offline');
             const cache = localStorage.getItem('deliveriesCache');
             if (cache) { deliveries = JSON.parse(cache); renderAll(); }
-            alert('Erro Firebase: ' + error.code);
+            alert('Erro ao carregar Firebase: ' + error.code);
         });
     }
 
+    // ============================================================
+    //  MAPA E LOCALIZAÇÃO
+    // ============================================================
     function initMap() {
         if (map) return;
         map = L.map('map').setView([-1.4558, -48.4902], 12);
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 20, subdomains: 'abcd'
+        }).addTo(map);
         markersLayer = L.layerGroup().addTo(map);
-        map.on('click', (e) => { if (originCoords && !manualCoords) return; manualCoords = { lat: e.latlng.lat, lng: e.latlng.lng }; openModalWithCoords(manualCoords.lat, manualCoords.lng); });
+        
+        map.on('click', (e) => {
+            const { lat, lng } = e.latlng;
+            if (originSelectActive) {
+                setOriginFromCoords(lat, lng, 'Ponto selecionado no mapa');
+                desativarSelecaoOrigem();
+                return;
+            }
+            openModalWithCoords(lat, lng);
+        });
+        
         mapInitialized = true;
         renderMarkers();
+        if (originCoords) criarMarcadorOrigem(originCoords.lat, originCoords.lng);
+        setTimeout(() => map.invalidateSize(), 200);
     }
 
     function renderMarkers() {
@@ -532,14 +613,181 @@
         markersLayer.clearLayers();
         getFilteredDeliveries().forEach(d => {
             if (!d.lat || !d.lng) return;
-            const m = L.marker([d.lat, d.lng]).addTo(markersLayer).bindPopup('<b>#'+d.orderNumber+'</b><br>'+d.client);
+            const marker = L.marker([d.lat, d.lng]).addTo(markersLayer);
+            marker.bindPopup(`<b>#${d.orderNumber}</b><br>${d.client}<br>${d.address}`);
         });
     }
 
+    function criarMarcadorOrigem(lat, lng) {
+        if (!map) return;
+        if (originMarker) map.removeLayer(originMarker);
+        originMarker = L.marker([lat, lng], {
+            icon: L.divIcon({
+                className: 'origin-pin',
+                html: '<div style="background:#e74c3c; width:24px; height:24px; border-radius:50%; border:3px solid white; display:flex; align-items:center; justify-content:center; color:white; font-size:12px; font-weight:bold;">P</div>',
+                iconSize: [24, 24], iconAnchor: [12, 12]
+            })
+        }).addTo(map).bindPopup('Ponto de partida');
+    }
+
+    let originSelectActive = false;
+    function ativarSelecaoOrigem() {
+        originSelectActive = true;
+        document.getElementById('btnOriginMap').classList.add('active');
+        if (map) map.getContainer().style.cursor = 'crosshair';
+        toastWarn('Clique no mapa para definir o ponto de partida.');
+    }
+    function desativarSelecaoOrigem() {
+        originSelectActive = false;
+        const btn = document.getElementById('btnOriginMap');
+        if (btn) btn.classList.remove('active');
+        if (map) map.getContainer().style.cursor = '';
+    }
+
+    async function setOriginFromCoords(lat, lng, label) {
+        originCoords = { lat, lng };
+        originAddress = label || (lat.toFixed(6) + ', ' + lng.toFixed(6));
+        if (mapInitialized) criarMarcadorOrigem(lat, lng);
+        try {
+            await db.collection('config').doc('origin').set({ coords: originCoords, address: originAddress }, { merge: true });
+            toastSuccess('Ponto de partida salvo.');
+        } catch (e) {
+            localStorage.setItem('originCoords', JSON.stringify(originCoords));
+            localStorage.setItem('originAddress', originAddress);
+        }
+        document.getElementById('originStatus').textContent = originAddress;
+        document.getElementById('originInput').value = originAddress;
+        renderAll();
+    }
+
+    // ============================================================
+    //  ROTA OTIMIZADA
+    // ============================================================
+    function haversineDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+    function ordenarPorVizinho(pendentes, inicio) {
+        const unvisited = [...pendentes];
+        const ordered = [];
+        let current = inicio;
+        while (unvisited.length) {
+            let nearestIdx = 0, minDist = Infinity;
+            for (let i = 0; i < unvisited.length; i++) {
+                const d = haversineDistance(current.lat, current.lng, unvisited[i].lat, unvisited[i].lng);
+                if (d < minDist) { minDist = d; nearestIdx = i; }
+            }
+            const next = unvisited.splice(nearestIdx, 1)[0];
+            ordered.push(next);
+            current = { lat: next.lat, lng: next.lng };
+        }
+        return ordered;
+    }
+    function minutosParaHora(totalMin) {
+        const horas = Math.floor(totalMin / 60) % 24;
+        const mins = Math.round(totalMin % 60);
+        return String(horas).padStart(2, '0') + ':' + String(mins).padStart(2, '0');
+    }
+    function horaParaMinutos(horaStr) {
+        if (!horaStr) return 0;
+        const partes = horaStr.split(':');
+        return parseInt(partes[0]) * 60 + parseInt(partes[1] || 0);
+    }
+
+    async function optimizeRoute() {
+        if (!mapInitialized) { alert('Abra a aba Mapa primeiro.'); return; }
+        const pendentes = getFilteredDeliveries().filter(d => d.status !== 'entregue' && d.status !== 'problema' && d.lat && d.lng);
+        if (pendentes.length < 2) { toastWarn('Precisa de pelo menos 2 entregas pendentes.'); return; }
+        if (!originCoords) { toastWarn('Defina o ponto de partida primeiro.'); return; }
+        const ordered = ordenarPorVizinho(pendentes, originCoords);
+        const coordsStr = [originCoords.lng + ',' + originCoords.lat, ...ordered.map(d => d.lng + ',' + d.lat)].join(';');
+        const url = 'https://router.project-osrm.org/route/v1/driving/' + coordsStr + '?overview=full&geometries=geojson';
+        try {
+            const resp = await fetch(url);
+            const data = await resp.json();
+            if (data.code !== 'Ok') { toastError('Erro na rota: ' + (data.message || '')); return; }
+            const route = data.routes[0];
+            if (routeLayer) routeLayer.clearLayers();
+            const latlngs = route.geometry.coordinates.map(c => [c[1], c[0]]);
+            const polyline = L.polyline(latlngs, { color: '#6b1a2a', weight: 4, opacity: 0.7 }).addTo(routeLayer);
+            map.fitBounds(polyline.getBounds().pad(0.1));
+            const totalDist = (route.distance / 1000).toFixed(1);
+            const totalTime = Math.round(route.duration / 60);
+            const info = document.getElementById('routeInfo');
+            info.textContent = ordered.length + ' entregas | ' + totalDist + ' km | ' + totalTime + ' min';
+            info.classList.add('show');
+            toastSuccess('Rota: ' + totalDist + ' km / ' + totalTime + ' min');
+        } catch (e) { toastError('Erro ao calcular rota: ' + e.message); }
+    }
+
+    async function calcularRotaDoDia() {
+        if (!mapInitialized) { alert('Abra a aba Mapa primeiro.'); return; }
+        const dataSel = document.getElementById('dayRouteDate').value;
+        const horaSaida = document.getElementById('dayRouteStartTime').value || '08:00';
+        if (!dataSel) { toastWarn('Selecione uma data.'); return; }
+        if (!originCoords) { toastWarn('Defina o ponto de partida primeiro.'); return; }
+        const doDia = getFilteredDeliveries().filter(d => d.deliveryDate === dataSel && d.status !== 'entregue' && d.status !== 'problema' && d.lat && d.lng);
+        const info = document.getElementById('dayRouteInfo');
+        if (doDia.length === 0) {
+            info.textContent = 'Nenhuma entrega pendente nesse dia.';
+            if (routeLayer) routeLayer.clearLayers();
+            return;
+        }
+        const ordered = doDia.length === 1 ? doDia : ordenarPorVizinho(doDia, originCoords);
+        const coordsStr = [originCoords.lng + ',' + originCoords.lat, ...ordered.map(d => d.lng + ',' + d.lat)].join(';');
+        const url = 'https://router.project-osrm.org/route/v1/driving/' + coordsStr + '?overview=full&geometries=geojson';
+        try {
+            const resp = await fetch(url);
+            const data = await resp.json();
+            if (data.code !== 'Ok') { toastError('Erro: ' + (data.message || '')); return; }
+            const route = data.routes[0];
+            if (routeLayer) routeLayer.clearLayers();
+            const latlngs = route.geometry.coordinates.map(c => [c[1], c[0]]);
+            const polyline = L.polyline(latlngs, { color: '#6b1a2a', weight: 4, opacity: 0.7 }).addTo(routeLayer);
+            map.fitBounds(polyline.getBounds().pad(0.1));
+
+            const totalDist = (route.distance / 1000).toFixed(1);
+            const totalTime = Math.round(route.duration / 60);
+            const legs = route.legs || [];
+            let minAcum = horaParaMinutos(horaSaida);
+            const paradas = [];
+            for (let i = 0; i < ordered.length; i++) {
+                if (legs[i]) minAcum += Math.round(legs[i].duration / 60);
+                paradas.push({ hora: minutosParaHora(minAcum), orderNumber: ordered[i].orderNumber, client: ordered[i].client });
+            }
+            const horaRetorno = minutosParaHora(minAcum + (legs[legs.length - 1] ? Math.round(legs[legs.length - 1].duration / 60) : 0));
+
+            info.innerHTML = '<strong>' + ordered.length + ' entrega' + (ordered.length > 1 ? 's' : '') + '</strong><br>' + totalDist + ' km<br>' + totalTime + ' min<br>Retorno: ' + horaRetorno;
+            let msg = 'ROTA DO DIA ' + formatDateLocal(dataSel) + '\nSaída: ' + horaSaida + '\n\n';
+            paradas.forEach(p => { msg += p.hora + '  #' + p.orderNumber + '  ' + p.client + '\n'; });
+            msg += '\nDistância: ' + totalDist + ' km\nTempo: ' + totalTime + ' min\nRetorno: ' + horaRetorno;
+            alert(msg);
+        } catch (e) { toastError('Erro: ' + e.message); }
+    }
+
+    // ============================================================
+    //  RENDERIZAÇÃO DO KANBAN E LÓGICA DE ARRASTAR
+    // ============================================================
     function renderKanban() {
-        const lists = { todo: document.getElementById('list-todo'), separacao: document.getElementById('list-separacao'), rota: document.getElementById('list-rota'), entregue: document.getElementById('list-entregue'), problema: document.getElementById('list-problema') };
-        const counts = { todo: document.getElementById('count-todo'), separacao: document.getElementById('count-separacao'), rota: document.getElementById('count-rota'), entregue: document.getElementById('count-entregue'), problema: document.getElementById('count-problema') };
+        const lists = {
+            todo: document.getElementById('list-todo'),
+            separacao: document.getElementById('list-separacao'),
+            rota: document.getElementById('list-rota'),
+            entregue: document.getElementById('list-entregue'),
+            problema: document.getElementById('list-problema')
+        };
+        const counts = {
+            todo: document.getElementById('count-todo'),
+            separacao: document.getElementById('count-separacao'),
+            rota: document.getElementById('count-rota'),
+            entregue: document.getElementById('count-entregue'),
+            problema: document.getElementById('count-problema')
+        };
         Object.values(lists).forEach(el => el.innerHTML = '');
+
         const groups = { todo: [], separacao: [], rota: [], entregue: [], problema: [] };
         getFilteredDeliveries().forEach(d => { if (groups[d.status]) groups[d.status].push(d); });
 
@@ -547,10 +795,14 @@
             const listEl = lists[status];
             items.forEach(d => {
                 const card = document.createElement('div');
-                card.className = 'card-item'; card.draggable = true; card.dataset.id = d.orderNumber;
+                card.className = 'card-item';
+                card.draggable = true;
+                card.dataset.id = d.orderNumber;
+
                 const lines = d.items ? String(d.items).split('\n') : [];
-                const itemsShort = lines.length ? lines.slice(0, 2).join(', ') : '-';
+                const itemsShort = lines.length ? lines.slice(0, 2).join(', ') + (lines.length > 2 ? '...' : '') : '-';
                 const phoneDigits = (d.phone || '').replace(/\D/g, '');
+
                 card.innerHTML = `
                     <div class="card-line-1"><span class="card-order">#${d.orderNumber}</span><span class="card-title">${itemsShort}</span></div>
                     <div class="card-line-2"><span class="card-client">${d.client || ''}</span>${d.phone ? '<span class="card-phone">'+d.phone+'</span>' : ''}</div>
@@ -572,12 +824,23 @@
                         </div>
                     </div>
                 `;
-                card.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', d.orderNumber); });
+
+                card.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', d.orderNumber);
+                    card.classList.add('dragging');
+                });
+                card.addEventListener('dragend', () => card.classList.remove('dragging'));
+                
                 listEl.appendChild(card);
             });
             if (counts[status]) counts[status].textContent = items.length;
         }
-        document.querySelectorAll('.move-btn').forEach(btn => { btn.removeEventListener('click', handleMove); btn.addEventListener('click', handleMove); });
+
+        document.querySelectorAll('.move-btn').forEach(btn => {
+            btn.removeEventListener('click', handleMove);
+            btn.addEventListener('click', handleMove);
+        });
+
         registerColumnDropHandlers();
     }
 
@@ -593,8 +856,15 @@
                 const newStatus = col.dataset.status;
                 if (delivery.status === newStatus) return;
                 if (newStatus === 'entregue') { openConfirmModal(orderNumber); return; }
-                delivery.status = newStatus; renderKanban();
-                try { await updateDelivery(orderNumber, { status: newStatus }); toastSuccess('Atualizado.'); } catch (err) { toastError(err.message); }
+                
+                delivery.status = newStatus;
+                renderKanban();
+                try {
+                    await updateDelivery(orderNumber, { status: newStatus });
+                    toastSuccess('Status atualizado.');
+                } catch (err) {
+                    toastError('Erro ao mover: ' + err.message);
+                }
             };
         });
     }
@@ -605,42 +875,139 @@
         const orderNumber = e.currentTarget.dataset.id;
         const delivery = deliveries.find(d => d.orderNumber === orderNumber);
         if (!delivery) return;
-        if (action === 'delete') { if (confirm('Excluir #'+orderNumber+'?')) { try { await deleteDelivery(orderNumber); toastSuccess('Excluído.'); } catch(err) { toastError(err.message); } } return; }
+
+        if (action === 'delete') {
+            if (confirm('Excluir entrega #' + delivery.orderNumber + ' - ' + delivery.client + '?')) {
+                try { await deleteDelivery(orderNumber); toastSuccess('Entrega excluída.'); }
+                catch (err) { toastError('Falha ao excluir: ' + err.message); }
+            }
+            return;
+        }
         if (action === 'edit') { openModalEdit(delivery); return; }
         if (action === 'termo') { gerarTermo(delivery); return; }
         if (action === 'embarque') { gerarPrevisaoEmbarque(delivery); return; }
         if (action === 'entregue') { openConfirmModal(orderNumber); return; }
+        
+        if (delivery.status === action) return;
+        const previousStatus = delivery.status;
+        delivery.status = action;
+        renderKanban();
+        try {
+            await updateDelivery(orderNumber, { status: action });
+            toastSuccess('Status atualizado.');
+        } catch (err) {
+            delivery.status = previousStatus;
+            renderKanban();
+            toastError('Não foi possível atualizar: ' + err.message);
+        }
     }
 
+    // ============================================================
+    //  MODAIS (CRIAR / EDITAR / CONFIRMAR)
+    // ============================================================
     function openModalWithCoords(lat, lng) {
-        document.getElementById('editId').value = ''; document.getElementById('modalTitle').textContent = 'Nova Entrega';
-        document.getElementById('orderNumber').disabled = false; document.getElementById('formDelivery').reset();
-        manualCoords = { lat, lng }; document.getElementById('coordInfo').style.display = 'block'; document.getElementById('coordDisplay').textContent = lat.toFixed(6)+', '+lng.toFixed(6);
+        document.getElementById('editId').value = '';
+        document.getElementById('modalTitle').textContent = 'Nova Entrega';
+        document.getElementById('btnDeleteModal').style.display = 'none';
+        document.getElementById('orderNumber').disabled = false;
+        document.getElementById('formDelivery').reset();
+        document.getElementById('status').value = 'todo';
+        manualCoords = { lat, lng };
+        editingOriginalAddress = null;
+        document.getElementById('coordInfo').style.display = 'block';
+        document.getElementById('coordDisplay').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
         document.getElementById('modalOverlay').classList.add('active');
+        
+        fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json')
+            .then(r => r.json()).then(data => { if (data.display_name) document.getElementById('address').value = data.display_name; }).catch(() => {});
     }
+
     function openModalEdit(delivery) {
-        document.getElementById('editId').value = delivery.orderNumber; document.getElementById('modalTitle').textContent = 'Editar';
-        document.getElementById('orderNumber').value = delivery.orderNumber; document.getElementById('orderNumber').disabled = true;
-        document.getElementById('client').value = delivery.client || ''; document.getElementById('phone').value = delivery.phone || ''; document.getElementById('responsible').value = delivery.responsible || '';
-        document.getElementById('deliveryDate').value = delivery.deliveryDate || ''; document.getElementById('deliveryTime').value = delivery.deliveryTime || '';
-        document.getElementById('items').value = delivery.items || ''; document.getElementById('address').value = delivery.address || '';
-        document.getElementById('deliveryType').value = delivery.type || 'consignacao'; document.getElementById('status').value = delivery.status || 'todo';
-        document.getElementById('observation').value = delivery.observation || ''; manualCoords = null; editingOriginalAddress = delivery.address || '';
-        if (delivery.lat && delivery.lng) { document.getElementById('coordInfo').style.display = 'block'; document.getElementById('coordDisplay').textContent = delivery.lat.toFixed(6)+', '+delivery.lng.toFixed(6); }
+        document.getElementById('editId').value = delivery.orderNumber;
+        document.getElementById('modalTitle').textContent = 'Editar Entrega';
+        document.getElementById('btnDeleteModal').style.display = 'inline-block';
+        document.getElementById('orderNumber').value = delivery.orderNumber || '';
+        document.getElementById('orderNumber').disabled = true;
+        document.getElementById('client').value = delivery.client || '';
+        document.getElementById('phone').value = delivery.phone || '';
+        document.getElementById('responsible').value = delivery.responsible || '';
+        document.getElementById('deliveryDate').value = delivery.deliveryDate || '';
+        document.getElementById('deliveryTime').value = delivery.deliveryTime || '';
+        document.getElementById('embarkDate').value = delivery.embarkDate || '';
+        document.getElementById('arrivalDate').value = delivery.arrivalDate || '';
+        document.getElementById('contractDeadline').value = delivery.contractDeadline || '';
+        document.getElementById('items').value = delivery.items || '';
+        document.getElementById('address').value = delivery.address || '';
+        document.getElementById('deliveryType').value = delivery.type || 'consignacao';
+        document.getElementById('status').value = delivery.status || 'todo';
+        document.getElementById('observation').value = delivery.observation || '';
+        manualCoords = null;
+        editingOriginalAddress = delivery.address || '';
+        if (delivery.lat && delivery.lng) {
+            document.getElementById('coordInfo').style.display = 'block';
+            document.getElementById('coordDisplay').textContent = delivery.lat.toFixed(6) + ', ' + delivery.lng.toFixed(6);
+        } else {
+            document.getElementById('coordInfo').style.display = 'none';
+        }
         document.getElementById('modalOverlay').classList.add('active');
     }
-    document.getElementById('btnOpenModal').addEventListener('click', () => { document.getElementById('editId').value = ''; document.getElementById('orderNumber').disabled = false; document.getElementById('formDelivery').reset(); manualCoords = null; document.getElementById('modalOverlay').classList.add('active'); });
-    document.getElementById('btnCancelModal').addEventListener('click', () => { document.getElementById('modalOverlay').classList.remove('active'); });
-    document.getElementById('confirmModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) document.getElementById('confirmModal').classList.remove('active'); });
-    
+
+    document.getElementById('btnOpenModal').addEventListener('click', () => {
+        document.getElementById('editId').value = '';
+        document.getElementById('modalTitle').textContent = 'Nova Entrega';
+        document.getElementById('btnDeleteModal').style.display = 'none';
+        document.getElementById('orderNumber').disabled = false;
+        manualCoords = null;
+        editingOriginalAddress = null;
+        document.getElementById('coordInfo').style.display = 'none';
+        document.getElementById('formDelivery').reset();
+        document.getElementById('status').value = 'todo';
+        document.getElementById('modalOverlay').classList.add('active');
+    });
+
+    document.getElementById('btnCancelModal').addEventListener('click', () => {
+        document.getElementById('modalOverlay').classList.remove('active');
+        document.getElementById('orderNumber').disabled = false;
+    });
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.getElementById('orderNumber').disabled = false;
+        }
+    });
+    document.getElementById('confirmModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) document.getElementById('confirmModal').classList.remove('active');
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.getElementById('orderNumber').disabled = false;
+            document.getElementById('confirmModal').classList.remove('active');
+        }
+    });
+
     document.getElementById('btnDeleteModal').addEventListener('click', async () => {
-        const id = document.getElementById('editId').value; if (!id) return;
-        if (confirm('Excluir #'+id+'?')) { try { await deleteDelivery(id); document.getElementById('modalOverlay').classList.remove('active'); toastSuccess('Excluído.'); } catch(err) { toastError(err.message); } }
+        const orderNumber = document.getElementById('editId').value;
+        if (!orderNumber) return;
+        const delivery = deliveries.find(d => d.orderNumber === orderNumber);
+        if (!delivery) return;
+        if (confirm('Excluir entrega #' + delivery.orderNumber + ' - ' + delivery.client + '?')) {
+            try {
+                await deleteDelivery(orderNumber);
+                document.getElementById('modalOverlay').classList.remove('active');
+                document.getElementById('orderNumber').disabled = false;
+                toastSuccess('Entrega excluída.');
+            } catch (err) { toastError('Erro ao excluir: ' + err.message); }
+        }
     });
 
     document.getElementById('formDelivery').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('btnSaveDelivery'); btn.disabled = true; btn.textContent = 'Salvando...';
+        const btn = document.getElementById('btnSaveDelivery');
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.textContent = 'Salvando...';
+
         try {
             const orderNumber = document.getElementById('orderNumber').value.trim();
             const client = document.getElementById('client').value.trim();
@@ -648,32 +1015,91 @@
             const responsible = document.getElementById('responsible').value.trim();
             const deliveryDate = document.getElementById('deliveryDate').value;
             const deliveryTime = document.getElementById('deliveryTime').value;
+            const embarkDate = document.getElementById('embarkDate').value;
+            const arrivalDate = document.getElementById('arrivalDate').value;
+            const contractDeadline = document.getElementById('contractDeadline').value;
             const items = document.getElementById('items').value.trim();
-            const address = document.getElementById('address').value.trim();
+            const addressInput = document.getElementById('address').value.trim();
             const type = document.getElementById('deliveryType').value;
             const status = document.getElementById('status').value;
             const observation = document.getElementById('observation').value.trim();
             const editId = document.getElementById('editId').value;
 
-            if (!orderNumber || !client || !items || !address) { toastWarn('Preencha os obrigatórios.'); btn.disabled = false; btn.textContent = 'Salvar'; return; }
-
-            let lat = manualCoords ? manualCoords.lat : (editId ? deliveries.find(d=>d.orderNumber===editId).lat : null);
-            let lng = manualCoords ? manualCoords.lng : (editId ? deliveries.find(d=>d.orderNumber===editId).lng : null);
-            let displayAddr = address;
-
-            if (!lat || !lng || (editingOriginalAddress && editingOriginalAddress !== address)) {
-                const geo = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(address) + '&format=json&limit=1').then(r => r.json()).catch(() => []);
-                if (geo && geo.length) { lat = parseFloat(geo[0].lat); lng = parseFloat(geo[0].lon); displayAddr = geo[0].display_name || address; }
-                else if (!editId) { toastError('Endereço não encontrado.'); btn.disabled = false; btn.textContent = 'Salvar'; return; }
+            if (!orderNumber || !client || !items || !addressInput) {
+                toastWarn('Preencha todos os campos obrigatórios.');
+                btn.disabled = false; btn.textContent = 'Salvar';
+                return;
             }
 
-            const payload = { orderNumber, client, phone, responsible, deliveryDate, deliveryTime, items, address: displayAddr, lat, lng, type, status, observation };
-            if (editId) { await updateDelivery(editId, payload); toastSuccess('Atualizado.'); }
-            else { payload.receivedBy = null; await addDelivery(payload); toastSuccess('Criado.'); }
+            let lat, lng, displayAddr = addressInput;
+
+            if (manualCoords) {
+                lat = manualCoords.lat; lng = manualCoords.lng;
+            } else if (editId) {
+                const delivery = deliveries.find(d => d.orderNumber === editId);
+                const addressChanged = editingOriginalAddress && editingOriginalAddress.trim() !== addressInput;
+                if (!addressChanged && delivery && delivery.lat && delivery.lng) {
+                    lat = delivery.lat; lng = delivery.lng; displayAddr = delivery.address;
+                } else {
+                    const geo = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(addressInput) + '&format=json&limit=1').then(r => r.json()).catch(() => []);
+                    if (!geo || !geo.length) {
+                        if (delivery && delivery.lat && delivery.lng) {
+                            toastWarn('Mantendo coordenadas antigas.');
+                            lat = delivery.lat; lng = delivery.lng; displayAddr = delivery.address;
+                        } else {
+                            toastError('Endereço não encontrado.');
+                            btn.disabled = false; btn.textContent = 'Salvar';
+                            return;
+                        }
+                    } else {
+                        lat = parseFloat(geo[0].lat); lng = parseFloat(geo[0].lon || geo[0].lng); displayAddr = geo[0].display_name || addressInput;
+                    }
+                }
+            } else {
+                const geo = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(addressInput) + '&format=json&limit=1').then(r => r.json()).catch(() => []);
+                if (!geo || !geo.length) {
+                    toastError('Endereço não encontrado. Clique no mapa para definir.');
+                    btn.disabled = false; btn.textContent = 'Salvar';
+                    return;
+                }
+                lat = parseFloat(geo[0].lat); lng = parseFloat(geo[0].lon || geo[0].lng); displayAddr = geo[0].display_name || addressInput;
+            }
+
+            const payload = { orderNumber, client, phone, responsible, deliveryDate, deliveryTime, embarkDate, arrivalDate, contractDeadline, items, address: displayAddr, lat, lng, type, status, observation };
             
+            if (editId) {
+                await updateDelivery(editId, payload);
+                toastSuccess('Entrega atualizada.');
+            } else {
+                payload.receivedBy = null; payload.confirmObs = null; payload.confirmDate = null; payload.distance = null; payload.duration = null;
+                await addDelivery(payload);
+                toastSuccess('Entrega cadastrada.');
+            }
             document.getElementById('modalOverlay').classList.remove('active');
-        } catch (err) { toastError('Erro: ' + err.message); } finally { btn.disabled = false; btn.textContent = 'Salvar'; }
+            document.getElementById('formDelivery').reset();
+            document.getElementById('orderNumber').disabled = false;
+            manualCoords = null;
+            editingOriginalAddress = null;
+            document.getElementById('coordInfo').style.display = 'none';
+        } catch (err) {
+            toastError('Erro ao salvar: ' + err.message);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Salvar';
+        }
     });
+
+    function openConfirmModal(orderNumber) {
+        const delivery = deliveries.find(d => d.orderNumber === orderNumber);
+        if (!delivery) return;
+        document.getElementById('confirmId').value = orderNumber;
+        document.getElementById('receivedBy').value = '';
+        document.getElementById('confirmObs').value = '';
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('confirmDate').value = now.toISOString().slice(0, 16);
+        document.getElementById('confirmModal').classList.add('active');
+    }
+    document.getElementById('btnCancelConfirm').addEventListener('click', () => { document.getElementById('confirmModal').classList.remove('active'); });
 
     document.getElementById('formConfirm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -681,22 +1107,32 @@
         const receivedBy = document.getElementById('receivedBy').value.trim();
         const confirmObs = document.getElementById('confirmObs').value.trim();
         const confirmDate = document.getElementById('confirmDate').value;
-        try { await updateDelivery(orderNumber, { status: 'entregue', receivedBy, confirmObs, confirmDate }); document.getElementById('confirmModal').classList.remove('active'); toastSuccess('Confirmado.'); } catch (err) { toastError(err.message); }
+        try {
+            await updateDelivery(orderNumber, { status: 'entregue', receivedBy, confirmObs, confirmDate });
+            document.getElementById('confirmModal').classList.remove('active');
+            toastSuccess('Entrega confirmada.');
+            setTimeout(() => { const updated = deliveries.find(d => d.orderNumber === orderNumber); if (updated) gerarTermo(updated); }, 400);
+        } catch (err) { toastError('Erro ao confirmar: ' + err.message); }
     });
 
-    function openConfirmModal(orderNumber) {
-        document.getElementById('confirmId').value = orderNumber;
-        document.getElementById('receivedBy').value = '';
-        const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        document.getElementById('confirmDate').value = now.toISOString().slice(0, 16);
-        document.getElementById('confirmModal').classList.add('active');
-    }
-
+    // ============================================================
+    //  GERAÇÃO DO TERMO + COMPROVANTE (PDF 2 PÁGINAS)
+    // ============================================================
     function gerarTermo(delivery) {
-        const safe = escapeHtml; const type = delivery.type || 'consignacao';
+        const safe = escapeHtml;
+        const type = delivery.type || 'consignacao';
         const itemsList = delivery.items ? String(delivery.items).split('\n').filter(i => i.trim()) : [];
+        
         let itemsHTML = '';
-        itemsList.forEach(item => { const parts = item.split(/[-–]/).map(s=>s.trim()); itemsHTML += `<tr><td>-</td><td>01/01</td><td>${safe(parts.length>1?parts[0]:'01')}</td><td>${safe(parts.length>1?parts[1]:parts[0])}</td><td>-</td><td></td></tr>`; });
+        itemsList.forEach(item => {
+            const parts = item.split(/[-–]/).map(s => s.trim());
+            const qtd = parts.length > 1 ? parts[0] : '01';
+            const desc = parts.length > 1 ? parts[1] : parts[0];
+            itemsHTML += `<tr><td>-</td><td>01/01</td><td>${safe(qtd)}</td><td>${safe(desc)}</td><td>-</td><td></td></tr>`;
+        });
+
+        const dataEntrega = delivery.deliveryDate ? formatDateLocal(delivery.deliveryDate) : '-';
+
         const htmlComprovante = `
             <div class="page-comprovante">
                 <div class="header-comp">
@@ -708,19 +1144,66 @@
                     <tr><td style="width:50%;"><span class="label">Loja:</span> BELEM | HONG POSSAS</td><td style="width:25%;"><span class="label">Tipo:</span> VENDA/MERCADORIA</td><td style="width:25%;"><span class="label">Ord:</span> -</td></tr>
                     <tr><td><span class="label">Cliente:</span> ${safe(delivery.client)}</td><td><span class="label">Web:</span> -</td><td><span class="label">Bairro:</span> -</td></tr>
                     <tr><td colspan="2"><span class="label">Endereço:</span> ${safe(delivery.address)}</td><td><span class="label">Período:</span> ${delivery.deliveryTime ? safe(delivery.deliveryTime) : 'MANHÃ'}</td></tr>
-                    <tr><td colspan="3"><span class="label">Data:</span> ${delivery.deliveryDate ? formatDateLocal(delivery.deliveryDate) : '-'}</td></tr>
+                    <tr><td colspan="3"><span class="label">Data:</span> ${safe(dataEntrega)}</td></tr>
                 </table>
-                <table class="itens-table"><thead><tr><th>Etiqueta</th><th>Volumes</th><th>Qtd</th><th>Descrição</th><th>Dimensão</th><th>Entregue</th></tr></thead><tbody>${itemsHTML}</tbody></table>
+                <table class="itens-table"><thead><tr><th>Etiqueta</th><th>Volumes</th><th>Qtd</th><th>Descrição</th><th>Dimensão</th><th>Entregue</th></tr></thead><tbody>${itemsHTML || '<tr><td colspan="6" style="text-align:center;">Nenhum item</td></tr>'}</tbody></table>
                 <div class="box-alerta">CASO OS PRODUTOS NÃO POSSAM SER MONTADOS NO ATO DA ENTREGA, SERÁ COBRADO R$ 500,00 POR TERMOS QUE NOS DESLOCAR NOVAMENTE.</div>
-                <div class="checkboxes"><div>OS ENTREGADORES ESTIVERAM EM MINHA RESIDÊNCIA DAS <u>&nbsp;&nbsp;&nbsp;</u> HS ÀS <u>&nbsp;&nbsp;&nbsp;</u> HS.</div><div style="margin-top:3px;">USARAM: ( ) Luvas ( ) Sapatilhas ( ) Uniforme ( ) Ferramentas</div><div style="margin-top:6px;">OBS:</div><div style="border-bottom:1px solid #000; height:15px;"></div><div style="border-bottom:1px solid #000; height:15px;"></div></div>
-                <div class="assinatura-box"><p>Recebido por: <span class="assinatura-line"></span></p><p>Assinatura: <span class="assinatura-line"></span></p></div>
-                <div class="small-text">A BRETON OFERECE GARANTIA EM SEUS PRODUTOS A PARTIR DA DATA DE RECEBIMENTO.<br>O MANUAL DO PROPRIETÁRIO ENCONTRA-SE NO WWW.BRETON.COM.BR</div>
+                <div class="checkboxes">
+                    <div>OS ENTREGADORES ESTIVERAM EM MINHA RESIDÊNCIA DAS <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> HS ÀS <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> HS.</div>
+                    <div style="margin-top:3px;">USARAM: ( ) Luvas &nbsp; ( ) Sapatilhas &nbsp; ( ) Uniforme &nbsp; ( ) Ferramentas</div>
+                    <div style="margin-top:6px;">OBS: Caso queira fazer algum comentário ou sugestão, relacione abaixo:</div>
+                    <div style="border-bottom:1px solid #000; height:15px;"></div>
+                    <div style="border-bottom:1px solid #000; height:15px;"></div>
+                </div>
+                <div class="assinatura-box"><p>Recebido por (nome em letra de forma): <span class="assinatura-line"></span></p><p>Assinatura: <span class="assinatura-line"></span></p></div>
+                <div class="assinatura-box" style="margin-top:15px;">
+                    <p style="margin-bottom:4px;">Caso no ato da entrega seja devolvido algum produto, obrigatoriamente deverá ser relacionado abaixo:</p>
+                    <table class="itens-table" style="margin-bottom:0;"><thead><tr><th>ITEM</th><th>PRODUTO</th><th>QTD</th><th>MOTIVO</th></tr></thead><tbody><tr><td>&nbsp;</td><td></td><td></td><td></td></tr><tr><td>&nbsp;</td><td></td><td></td><td></td></tr></tbody></table>
+                </div>
+                <div class="small-text">Em caso de dúvidas ou reclamações, ligar (11) 4055-9707 para SP capital e grande SP. Para demais regiões 4003-1699 - Setor de Atendimento ao Cliente.<br>A BRETON OFERECE GARANTIA EM SEUS PRODUTOS A PARTIR DA DATA DE RECEBIMENTO.<br>O MANUAL DO PROPRIETÁRIO ENCONTRA-SE NO WWW.BRETON.COM.BR</div>
             </div>
         `;
+
         const titles = { consignacao: 'TERMO DE CONSIGNAÇÃO', retirada: 'TERMO DE RETIRADA', visita: 'TERMO DE VISITA TÉCNICA', emprestimo: 'TERMO DE EMPRÉSTIMO', montagem: 'TERMO DE ENTREGA E MONTAGEM' };
-        let htmlTermo = `<div class="page-termo"><div class="header-termo">BRETON - HONG POSSAS</div><div class="content-termo"><h2>${safe(titles[type])}</h2><p><strong>Cliente:</strong> ${safe(delivery.client)}</p><p><strong>Endereço:</strong> ${safe(delivery.address)}</p><p><strong>Pedido nº:</strong> ${safe(delivery.orderNumber)}</p>`;
-        if (type === 'consignacao' || type === 'emprestimo') { htmlTermo += `<p>Declaro haver recebido, a título de consignação:</p><table class="items-table"><tr><th>Qtd</th><th>Item</th></tr>`; itemsList.forEach(i=>htmlTermo+=`<tr><td>${i.split('-')[0]||'01'}</td><td>${i.split('-')[1]||i}</td></tr>`); htmlTermo += `</table><p>Comprometo-me a devolver em perfeitas condições.</p>`; } else { htmlTermo += `<p>Itens:</p><ul>`; itemsList.forEach(i=>htmlTermo+=`<li>${safe(i)}</li>`); htmlTermo += `</ul>`; }
-        htmlTermo += `<p style="margin-top:20px;"><strong>Belém-PA, ${formatDateLocal(delivery.deliveryDate)}</strong></p><div class="signature"><div class="line"></div><p>${safe(delivery.client)}</p></div></div><div class="footer-termo">End.: Trav. 14 de Março, 1100 - Umarizal | CEP. 66055-490 / Belém-PA</div></div>`;
+        
+        let htmlTermo = '<div class="page-termo">';
+        htmlTermo += '<div class="header-termo">BRETON - HONG POSSAS</div>';
+        htmlTermo += '<div class="content-termo">';
+        htmlTermo += '<h2>' + safe(titles[type] || 'TERMO') + '</h2>';
+        htmlTermo += '<p><strong>Cliente:</strong> ' + safe(delivery.client) + '</p>';
+        htmlTermo += '<p><strong>Endereço:</strong> ' + safe(delivery.address) + '</p>';
+        if (delivery.orderNumber) htmlTermo += '<p><strong>Pedido nº:</strong> ' + safe(delivery.orderNumber) + '</p>';
+        
+        if (type === 'consignacao' || type === 'emprestimo') {
+            htmlTermo += '<p>Declaro haver recebido, a título de ' + (type === 'consignacao' ? 'consignação' : 'empréstimo') + ', os itens abaixo discriminados:</p>';
+            htmlTermo += '<table class="items-table"><tr><th>Qtd</th><th>Item</th></tr>';
+            itemsList.forEach(item => {
+                const parts = item.split(/[-–]/).map(s => s.trim());
+                const qtd = parts.length > 1 ? parts[0] : '01';
+                const desc = parts.length > 1 ? parts[1] : parts[0];
+                htmlTermo += '<tr><td>' + safe(qtd) + '</td><td>' + safe(desc) + '</td></tr>';
+            });
+            htmlTermo += '</table>';
+            htmlTermo += '<p>Comprometo-me a efetuar a devolução destes móveis, dentro das condições abaixo:</p><ul><li>Os produtos descritos encontram-se em perfeito estado.</li><li>A mercadoria deverá ser devolvida em perfeita condição de uso e limpeza.</li><li>Qualquer dano à mercadoria será cobrado do solicitante.</li><li>As partes assinam o presente documento na presença de duas testemunhas.</li></ul>';
+        } else if (type === 'retirada') {
+            htmlTermo += '<p>Declaro haver recebido a Equipe de Montagem da Breton Belém, para retirada dos itens abaixo:</p><ul>';
+            itemsList.forEach(item => htmlTermo += '<li>' + safe(item) + '</li>');
+            htmlTermo += '</ul>';
+        } else if (type === 'visita') {
+            htmlTermo += '<p>Declaro haver recebido a Equipe de Entrega e Montagem da Breton Belém, para troca do item:</p><ul>';
+            itemsList.forEach(item => htmlTermo += '<li>' + safe(item) + '</li>');
+            htmlTermo += '</ul>';
+        } else if (type === 'montagem') {
+            htmlTermo += '<p>Declaro haver recebido a Equipe de Entrega e Montagem da Breton Belém, para entrega e montagem dos itens abaixo, segundo o pedido ' + safe(delivery.orderNumber || '') + ':</p><ul>';
+            itemsList.forEach(item => htmlTermo += '<li>' + safe(item) + '</li>');
+            htmlTermo += '</ul>';
+        }
+        
+        const dataStr = delivery.confirmDate ? formatDateTimeLocal(delivery.confirmDate) : (delivery.deliveryDate ? formatDateLocal(delivery.deliveryDate) : '___/___/____');
+        htmlTermo += '<p style="margin-top:20px;"><strong>Belém-PA, ' + safe(dataStr) + '</strong></p>';
+        htmlTermo += '<div class="signature"><div class="line"></div><p>' + safe(delivery.client) + '</p>' + (delivery.receivedBy ? '<p style="font-size:10pt;">Recebido por: ' + safe(delivery.receivedBy) + '</p>' : '') + '</div>';
+        htmlTermo += '</div><div class="footer-termo">End.: Trav. 14 de Março, 1100 - Umarizal | CEP. 66055-490 / Belém-PA</div></div>';
+
         const container = document.getElementById('termoPrint');
         container.innerHTML = htmlComprovante + htmlTermo;
         container.style.display = 'block';
@@ -728,19 +1211,313 @@
         setTimeout(() => window.print(), 200);
     }
 
-    // Previsão de Embarque e Utilitários
-    function gerarPrevisaoEmbarque(delivery) { alert('Função de embarque pronta para uso.'); }
-    function renderCalendar(year, month) { document.getElementById('calendarGrid').innerHTML = '<div style="padding:20px;text-align:center;">Calendário carregando...</div>'; }
-    function renderDashboard() { document.getElementById('dashCards').innerHTML = '<div style="padding:20px;">Dashboard</div>'; }
-    function renderReport() { document.getElementById('reportBody').innerHTML = '<tr><td colspan="9" style="text-align:center;">Relatório Pronto</td></tr>'; }
+    // ============================================================
+    //  PREVISÃO DE EMBARQUE
+    // ============================================================
+    function gerarPrevisaoEmbarque(delivery) {
+        if (!delivery.embarkDate && !delivery.arrivalDate) {
+            if (!confirm('Esta entrega ainda não tem as datas de embarque cadastradas. Deseja editar agora?')) return;
+            openModalEdit(delivery); return;
+        }
+        const safe = escapeHtml;
+        const itemsList = delivery.items ? String(delivery.items).split('\n').filter(i => i.trim()) : [];
+        
+        let html = '<div class="termo-print" style="display:block !important;"><div class="header">BRETON - HONG POSSAS</div><div class="content">';
+        html += '<h2>PREVISÃO DE EMBARQUE E CHEGADA EM BELÉM</h2>';
+        html += '<p><strong>Belém-PA, ' + safe(new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })) + '</strong></p>';
+        html += '<p><strong>Pedido nº:</strong> ' + safe(delivery.orderNumber || '') + '</p>';
+        html += '<p>Prezado(a) Sr(a). ' + safe(delivery.client) + ',</p>';
+        html += '<p>A Breton Belém agradece a confiança depositada em nossa empresa e tem o prazer de mantê-lo(a) informado(a) sobre o andamento do seu pedido.</p>';
+        html += '<p style="margin-top:14px;"><strong>ITENS DO PEDIDO</strong></p>';
+        html += '<table class="items-table"><tr><th>Qtd</th><th>Descrição</th><th>Embarque previsto</th></tr>';
+        itemsList.forEach(item => {
+            const parts = item.split(/[-–]/).map(s => s.trim());
+            const qtd = parts.length > 1 ? parts[0] : '01';
+            const desc = parts.length > 1 ? parts[1] : parts[0];
+            html += '<tr><td>' + safe(qtd) + '</td><td>' + safe(desc) + '</td><td>' + (delivery.embarkDate ? safe(formatDateLocal(delivery.embarkDate)) : '-') + '</td></tr>';
+        });
+        html += '</table>';
+        html += '<div class="embarque-box">';
+        html += '<div class="linha"><span class="label">Previsão de embarque:</span><span>' + (delivery.embarkDate ? safe(formatDateLocal(delivery.embarkDate)) : '-') + '</span></div>';
+        html += '<div class="linha"><span class="label">Previsão de chegada em Belém:</span><span>' + (delivery.arrivalDate ? safe(formatDateLocal(delivery.arrivalDate)) : '-') + '</span></div>';
+        if (delivery.contractDeadline) html += '<div class="linha"><span class="label">Prazo em contrato:</span><span>' + safe(formatDateLocal(delivery.contractDeadline)) + '</span></div>';
+        html += '</div>';
+        html += '<p><strong>SOBRE O PROCESSO</strong></p>';
+        html += '<p>Após o embarque, inicia-se o prazo logístico com previsão de 15 a 20 dias para a chegada em Belém. Em seguida, os itens passarão por conferência em nosso setor de qualidade.</p>';
+        html += '<p>Concluída essa etapa, nossa equipe entrará em contato para agendar a entrega na data mais conveniente para você.</p>';
+        html += '<p>Você será informado(a) em cada etapa do processo, garantindo total transparência e acompanhamento até a finalização.</p>';
+        html += '<p style="margin-top:16px;">Em caso de dúvidas, nossa equipe está à inteira disposição para atendê-lo(a).</p>';
+        html += '<p>Atenciosamente,</p>';
+        html += '<div class="signature"><div class="line"></div><p>Setor de Logística<br>Breton Belém</p></div>';
+        html += '</div><div class="footer">End.: Trav. 14 de Março, 1100 - Umarizal | CEP. 66055-490 / Belém-PA</div></div>';
+        
+        const container = document.getElementById('termoPrint');
+        container.innerHTML = html;
+        document.body.classList.remove('printing-report');
+        setTimeout(() => window.print(), 100);
+    }
 
-    document.querySelectorAll('#tabButtons button[data-tab]').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.getElementById('tab-' + btn.dataset.tab).classList.add('active'); if (btn.dataset.tab === 'map' && !mapInitialized) initMap(); }); });
+    // ============================================================
+    //  CALENDÁRIO, DASHBOARD E RELATÓRIO
+    // ============================================================
+    function renderCalendar(year, month) {
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
+        const daysNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        daysNames.forEach(name => { const div = document.createElement('div'); div.className = 'day-name'; div.textContent = name; grid.appendChild(div); });
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+        const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+        const filtered = getFilteredDeliveries();
+
+        for (let i = 0; i < totalCells; i++) {
+            let dayNumber, isOtherMonth = false, cellYear = year, cellMonth = month;
+            if (i < firstDay) { dayNumber = daysInPrevMonth - firstDay + i + 1; isOtherMonth = true; cellMonth = month - 1; }
+            else if (i >= firstDay + daysInMonth) { dayNumber = i - (firstDay + daysInMonth) + 1; isOtherMonth = true; cellMonth = month + 1; }
+            else { dayNumber = i - firstDay + 1; }
+
+            const dateObj = new Date(cellYear, cellMonth, dayNumber);
+            const dateStr = formatISODate(dateObj);
+            const cell = document.createElement('div');
+            cell.className = 'day-cell' + (isOtherMonth ? ' other-month' : '');
+            const numDiv = document.createElement('div'); numDiv.className = 'day-number'; numDiv.textContent = dayNumber; cell.appendChild(numDiv);
+
+            const dayDeliveries = filtered.filter(d => d.deliveryDate === dateStr);
+            dayDeliveries.sort((a, b) => (a.deliveryTime || '99:99').localeCompare(b.deliveryTime || '99:99'));
+
+            dayDeliveries.forEach(d => {
+                const badge = document.createElement('span');
+                badge.className = 'delivery-badge'; badge.draggable = true; badge.dataset.id = d.orderNumber;
+                if (d.deliveryTime) { const t = document.createElement('span'); t.className = 'badge-time'; t.textContent = d.deliveryTime; badge.appendChild(t); }
+                badge.appendChild(document.createTextNode('#' + d.orderNumber + ' ' + (d.client || '')));
+                
+                const deleteBtn = document.createElement('span');
+                deleteBtn.className = 'badge-delete'; deleteBtn.textContent = 'x'; deleteBtn.title = 'Excluir';
+                deleteBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (confirm('Excluir entrega #' + d.orderNumber + ' - ' + d.client + '?')) {
+                        try { await deleteDelivery(d.orderNumber); toastSuccess('Entrega excluída.'); }
+                        catch (err) { toastError('Erro: ' + err.message); }
+                    }
+                });
+                badge.appendChild(deleteBtn);
+                badge.addEventListener('click', (e) => {
+                    if (e.target.closest('.badge-delete')) return;
+                    const delivery = deliveries.find(del => del.orderNumber === badge.dataset.id);
+                    if (delivery) openModalEdit(delivery);
+                });
+                badge.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', d.orderNumber); });
+                cell.appendChild(badge);
+            });
+
+            cell.addEventListener('dragover', (e) => { e.preventDefault(); cell.classList.add('drag-over'); });
+            cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
+            cell.addEventListener('drop', async (e) => {
+                e.preventDefault(); cell.classList.remove('drag-over');
+                const orderNumber = e.dataTransfer.getData('text/plain');
+                if (!orderNumber) return;
+                const delivery = deliveries.find(d => d.orderNumber === orderNumber);
+                if (!delivery) return;
+                try { await updateDelivery(orderNumber, { deliveryDate: dateStr }); toastSuccess('Agendado para ' + formatDateLocal(dateStr)); }
+                catch (err) { toastError('Erro: ' + err.message); }
+            });
+            grid.appendChild(cell);
+        }
+        document.getElementById('calMonthYear').textContent = new Date(year, month).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    }
+
+    function renderDashboard() {
+        const filtered = getFilteredDeliveries();
+        const total = filtered.length;
+        const hoje = getTodayStr();
+        const entregasHoje = filtered.filter(d => d.deliveryDate === hoje).length;
+        const atrasadas = filtered.filter(d => d.deliveryDate && d.deliveryDate < hoje && d.status !== 'entregue' && d.status !== 'problema').length;
+        const emRota = filtered.filter(d => d.status === 'rota').length;
+        const concluidas = filtered.filter(d => d.status === 'entregue').length;
+
+        document.getElementById('dashCards').innerHTML = `
+            <div class="dash-card info"><div class="number">${total}</div><div class="label">Total</div></div>
+            <div class="dash-card warning"><div class="number">${entregasHoje}</div><div class="label">Hoje</div></div>
+            <div class="dash-card danger"><div class="number">${atrasadas}</div><div class="label">Atrasadas</div></div>
+            <div class="dash-card info"><div class="number">${emRota}</div><div class="label">Em Rota</div></div>
+            <div class="dash-card success"><div class="number">${concluidas}</div><div class="label">Concluídas</div></div>`;
+
+        const statusCounts = { todo: 0, separacao: 0, rota: 0, entregue: 0, problema: 0 };
+        filtered.forEach(d => { if (statusCounts[d.status] !== undefined) statusCounts[d.status]++; });
+
+        const ctx1 = document.getElementById('statusChart').getContext('2d');
+        if (statusChartInstance) statusChartInstance.destroy();
+        statusChartInstance = new Chart(ctx1, { type: 'doughnut', data: { labels: ['A Fazer', 'Separação', 'Em Rota', 'Entregue', 'Problema'], datasets: [{ data: [statusCounts.todo, statusCounts.separacao, statusCounts.rota, statusCounts.entregue, statusCounts.problema], backgroundColor: ['#f39c12', '#3498db', '#9b59b6', '#2ecc71', '#e74c3c'], borderWidth: 0 }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+
+        const today = new Date(); const days = [], counts = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(today); d.setDate(d.getDate() - i);
+            const ds = formatISODate(d); days.push(ds.slice(5)); counts.push(filtered.filter(del => del.deliveryDate === ds).length);
+        }
+        const ctx2 = document.getElementById('dailyChart').getContext('2d');
+        if (dailyChartInstance) dailyChartInstance.destroy();
+        dailyChartInstance = new Chart(ctx2, { type: 'bar', data: { labels: days, datasets: [{ label: 'Entregas', data: counts, backgroundColor: '#3498db', borderRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
+
+        const respMap = {};
+        filtered.forEach(d => { const r = d.responsible || 'Não definido'; respMap[r] = (respMap[r] || 0) + 1; });
+        const ctx3 = document.getElementById('responsibleChart').getContext('2d');
+        if (responsibleChartInstance) responsibleChartInstance.destroy();
+        responsibleChartInstance = new Chart(ctx3, { type: 'bar', data: { labels: Object.keys(respMap), datasets: [{ label: 'Entregas', data: Object.values(respMap), backgroundColor: '#9b59b6', borderRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
+    }
+
+    function renderReport() {
+        const respSelect = document.getElementById('filterResponsible');
+        if (respSelect) {
+            const currentVal = respSelect.value;
+            const responsables = [...new Set(deliveries.map(d => d.responsible).filter(r => r))];
+            respSelect.innerHTML = '<option value="all">Todos</option>' + responsables.map(r => '<option value="' + escapeHtml(r) + '">' + escapeHtml(r) + '</option>').join('');
+            if (currentVal && responsables.includes(currentVal)) respSelect.value = currentVal;
+        }
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const period = document.getElementById('filterPeriod').value;
+        const status = document.getElementById('filterStatus').value;
+        let filtered = getFilteredDeliveries();
+        let startDate = null, endDate = null;
+
+        if (period === 'today') { const t = getTodayStr(); startDate = t; endDate = t; }
+        else if (period === 'tomorrow') { const d = new Date(); d.setDate(d.getDate() + 1); const t = formatISODate(d); startDate = t; endDate = t; }
+        else if (period === 'week') { const range = getWeekRange(); startDate = range.start; endDate = range.end; }
+        else if (period === 'month') { const range = getMonthRange(); startDate = range.start; endDate = range.end; }
+        else if (period === 'all') { startDate = null; endDate = null; }
+
+        if (startDate && endDate) filtered = filtered.filter(d => d.deliveryDate && d.deliveryDate >= startDate && d.deliveryDate <= endDate);
+        if (status !== 'all') filtered = filtered.filter(d => d.status === status);
+
+        const tbody = document.getElementById('reportBody');
+        tbody.innerHTML = '';
+
+        if (filtered.length === 0) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 9; td.style.textAlign = 'center'; td.style.color = '#5e6c84'; td.style.padding = '20px';
+            td.textContent = 'Nenhuma entrega encontrada.';
+            tr.appendChild(td); tbody.appendChild(tr); return;
+        }
+
+        filtered.sort((a, b) => {
+            const da = a.deliveryDate || '9999-99-99'; const db = b.deliveryDate || '9999-99-99';
+            if (da !== db) return da.localeCompare(db);
+            return (a.deliveryTime || '99:99').localeCompare(b.deliveryTime || '99:99');
+        });
+
+        filtered.forEach(d => {
+            const tr = document.createElement('tr');
+            const cells = [d.orderNumber, d.client, d.phone || '-', d.deliveryDate ? formatDateLocal(d.deliveryDate) : '-', d.deliveryTime || '-', d.responsible || '-', d.address, STATUS_LABELS[d.status] || d.status, TYPE_LABELS[d.type] || d.type];
+            cells.forEach(val => { const td = document.createElement('td'); td.textContent = val === null || val === undefined ? '' : String(val); tr.appendChild(td); });
+            tbody.appendChild(tr);
+        });
+    }
+
+    function getWeekRange() {
+        const hoje = new Date();
+        const dia = hoje.getDay();
+        const diff = hoje.getDate() - dia + (dia === 0 ? -6 : 1);
+        const seg = new Date(hoje); seg.setDate(diff);
+        const dom = new Date(seg); dom.setDate(seg.getDate() + 6);
+        return { start: formatISODate(seg), end: formatISODate(dom) };
+    }
+
+    // ============================================================
+    //  EVENTOS FINAIS E INICIALIZAÇÃO
+    // ============================================================
+    document.getElementById('filterPeriod').addEventListener('change', function () {
+        const custom = document.getElementById('dateRangeGroup');
+        if (custom) custom.style.display = this.value === 'custom' ? 'flex' : 'none';
+        if (this.value !== 'custom') applyFilters();
+    });
+    document.getElementById('btnApplyFilters').addEventListener('click', applyFilters);
+
+    document.getElementById('btnExportCSV').addEventListener('click', () => {
+        const rows = document.querySelectorAll('#reportTable tbody tr');
+        if (!rows.length || rows[0].cells.length === 1) { toastWarn('Sem dados.'); return; }
+        const headers = ['Pedido', 'Cliente', 'Telefone', 'Data', 'Hora', 'Responsável', 'Endereço', 'Status', 'Tipo'];
+        let csv = headers.join(';') + '\n';
+        rows.forEach(tr => {
+            const cols = tr.querySelectorAll('td');
+            const rowData = [];
+            cols.forEach(td => { const text = td.textContent.trim().replace(/\s+/g, ' ').replace(/"/g, '""'); rowData.push('"' + text + '"'); });
+            csv += rowData.join(';') + '\n';
+        });
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'relatorio_' + getTodayStr() + '.csv'; link.click();
+    });
+    
+    document.getElementById('btnPrintReport').addEventListener('click', () => { document.body.classList.add('printing-report'); setTimeout(() => window.print(), 100); });
+    window.addEventListener('afterprint', () => {
+        document.body.classList.remove('printing-report');
+        const termo = document.getElementById('termoPrint');
+        if (termo) termo.innerHTML = '';
+    });
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        const target = document.getElementById('tab-' + tabId);
+        if (target) target.classList.add('active');
+        document.querySelectorAll('#tabButtons button[data-tab]').forEach(btn => { btn.classList.toggle('active-tab', btn.dataset.tab === tabId); });
+        if (tabId === 'map') { setTimeout(() => { if (!mapInitialized) initMap(); if (map) { map.invalidateSize(); renderMarkers(); if (originCoords) criarMarcadorOrigem(originCoords.lat, originCoords.lng); } }, 200); if (originSelectActive) desativarSelecaoOrigem(); }
+        if (tabId === 'dashboard') renderDashboard();
+        if (tabId === 'calendar') renderCalendar(currentYear, currentMonth);
+        if (tabId === 'report') renderReport();
+    }
+    document.querySelectorAll('#tabButtons button[data-tab]').forEach(btn => { btn.addEventListener('click', () => switchTab(btn.dataset.tab)); });
+
+    function renderAll() {
+        localStorage.setItem('deliveriesCache', JSON.stringify(deliveries));
+        renderKanban();
+        if (mapInitialized) renderMarkers();
+        if (document.getElementById('tab-calendar').classList.contains('active')) renderCalendar(currentYear, currentMonth);
+        if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+        if (document.getElementById('tab-report').classList.contains('active')) renderReport();
+    }
+
+    document.getElementById('calPrev').addEventListener('click', () => { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; } renderCalendar(currentYear, currentMonth); });
+    document.getElementById('calNext').addEventListener('click', () => { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } renderCalendar(currentYear, currentMonth); });
+
+    document.getElementById('btnMapSearch').addEventListener('click', async () => {
+        const q = document.getElementById('mapSearchInput').value.trim();
+        if (!q) return;
+        if (!mapInitialized) initMap();
+        try {
+            const geo = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) + '&format=json&limit=1').then(r => r.json()).catch(() => []);
+            if (geo && geo.length) { const lat = parseFloat(geo[0].lat); const lng = parseFloat(geo[0].lon || geo[0].lng); map.setView([lat, lng], 16, { animate: true }); L.marker([lat, lng]).addTo(map).bindPopup(geo[0].display_name).openPopup(); }
+            else { toastWarn('Local não encontrado.'); }
+        } catch (e) { toastError('Erro: ' + e.message); }
+    });
+
+    document.getElementById('btnOptimizeRoute').addEventListener('click', optimizeRoute);
+    document.getElementById('btnDayRoute').addEventListener('click', calcularRotaDoDia);
     document.getElementById('globalSearch').addEventListener('input', applySearch);
+    document.getElementById('btnClearSearch').addEventListener('click', () => { document.getElementById('globalSearch').value = ''; applySearch(); });
+    document.getElementById('btnSetOrigin').addEventListener('click', async () => {
+        const address = document.getElementById('originInput').value.trim();
+        if (!address) { toastWarn('Digite um endereço.'); return; }
+        try {
+            const geo = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(address) + '&format=json&limit=1').then(r => r.json()).catch(() => []);
+            if (!geo || !geo.length) { toastError('Endereço não encontrado.'); return; }
+            await setOriginFromCoords(parseFloat(geo[0].lat), parseFloat(geo[0].lon || geo[0].lng), geo[0].display_name || address);
+        } catch (e) { toastError('Erro: ' + e.message); }
+    });
+    document.getElementById('btnOriginMap').addEventListener('click', () => { if (!mapInitialized) initMap(); if (originSelectActive) desativarSelecaoOrigem(); else ativarSelecaoOrigem(); });
 
-    auth.signInAnonymously().then(() => { setStatus('Online', 'online'); iniciarSnapshot(); }).catch((error) => { setStatus('Offline', 'offline'); const cache = localStorage.getItem('deliveriesCache'); if (cache) { deliveries = JSON.parse(cache); renderAll(); } alert('Erro Auth: ' + error.message); });
+    auth.signInAnonymously()
+        .then(() => { setStatus('Online', 'online'); iniciarSnapshot(); })
+        .catch((error) => {
+            setStatus('Offline', 'offline');
+            const cache = localStorage.getItem('deliveriesCache');
+            if (cache) { deliveries = JSON.parse(cache); renderAll(); }
+            alert('Erro de autenticação: ' + error.message);
+        });
 
-    function renderAll() { renderKanban(); renderMarkers(); }
-    console.log('Sistema v3.7 carregado.');
+    console.log('Sistema Hong Possas v4.0 carregado.');
     </script>
 </body>
 </html>
