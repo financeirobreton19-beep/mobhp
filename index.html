@@ -91,6 +91,7 @@
     .day-route-control .btn-calc { width: 100%; padding: 6px; background: #6b1a2a; color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
     .day-route-control .btn-calc:hover { background: #8a2235; }
     .day-route-control .info-day { font-size: 0.72rem; color: #5e6c84; margin-top: 8px; padding-top: 8px; border-top: 1px solid #ebecf0; line-height: 1.5; }
+    .day-route-control .info-day strong { color: #172b4d; }
     .route-info { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.95); padding: 8px 16px; border-radius: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-size: 0.8rem; display: none; z-index: 999; font-weight: 500; white-space: nowrap; }
     .route-info.show { display: block; }
 
@@ -503,6 +504,7 @@
     let editingOriginalAddress = null;
     let searchTerm = '';
     let statusChartInstance, dailyChartInstance, responsibleChartInstance;
+    let originSelectActive = false;
 
     const STATUS_LABELS = { todo: 'A Fazer', separacao: 'Separação', rota: 'Em Rota', entregue: 'Entregue', problema: 'Problema' };
     const TYPE_LABELS = { consignacao: 'Consignação', retirada: 'Retirada', visita: 'Visita Técnica', emprestimo: 'Empréstimo', montagem: 'Entrega e Montagem' };
@@ -582,13 +584,13 @@
     }
 
     // ============================================================
-    //  MAPA E LOCALIZAÇÃO
+    //  MAPA E LOCALIZAÇÃO (CORRIGIDO PARA OSM)
     // ============================================================
     function initMap() {
         if (map) return;
         map = L.map('map').setView([-1.4558, -48.4902], 12);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 20, subdomains: 'abcd'
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap', maxZoom: 19
         }).addTo(map);
         markersLayer = L.layerGroup().addTo(map);
         
@@ -630,7 +632,6 @@
         }).addTo(map).bindPopup('Ponto de partida');
     }
 
-    let originSelectActive = false;
     function ativarSelecaoOrigem() {
         originSelectActive = true;
         document.getElementById('btnOriginMap').classList.add('active');
